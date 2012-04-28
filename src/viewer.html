@@ -209,7 +209,7 @@ function addTab(tabId, height, zIndex) {
 function loadFile() {
    var file = $('#glmol01_file').get(0);
    if (file) file = file.files;
-　 if (!file || !window.FileReader || !file[0]) {
+   if (!file || !window.FileReader || !file[0]) {
       alert("No file is selected. Or File API is not supported in your browser. Please try Firefox or Chrome.");
       return;
    }
