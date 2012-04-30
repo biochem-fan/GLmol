@@ -31,7 +31,7 @@ THREE.Matrix4.prototype.isIdentity = function() {
    return true;
 };
 
-function hookShader() { // Lambert Shader ONLY
+function hookShader() { // Lambert Shader and Line Shader ONLY
 //  For texture-coordinates, see 
 //      http://stackoverflow.com/questions/5879403/opengl-texture-coordinates-in-pixel-space/5879551#5879551
 //  This is the heart of this trick.
@@ -48,6 +48,14 @@ function hookShader() { // Lambert Shader ONLY
 
 //  Disable normal texture mapping 
 THREE.ShaderLib.lambert.fragmentShader = THREE.ShaderLib.lambert.fragmentShader.replace("gl_FragColor = gl_FragColor * texture2D( map, vUv );", "");
+
+//  Same for 'basic' shader
+//   For this to work, WebGLRenderer.js has to be patched beforehand.
+   THREE.ShaderLib.basic.vertexShader =  THREE.ShaderLib.basic.vertexShader.replace("void main", "uniform sampler2D map; \n \n\nvec3 pickColor(vec3 color){\n int serial = int(color.b * 255.0 + color.g * 65280.0 + color.r * 16711680.0 + 0.01); float x = ((mod(float(serial), 512.0))* 2.0 + 1.0) / 1024.0, y = (float(serial / 512) * 2.0 + 1.0) / 1024.0;\n \n return texture2D(map, vec2(x, y)).rgb;\n} \n\n\nvoid main");
+   THREE.ShaderLib.basic.vertexShader =  THREE.ShaderLib.basic.vertexShader.replace(/\* diffuse/g, "* diffuse2");
+   THREE.ShaderLib.basic.vertexShader =  THREE.ShaderLib.basic.vertexShader.replace("vLightFront = vLightFront *", "///////////////////////////////////////\n\n#ifndef USE_COLOR\nvec3 diffuse2 = pickColor(diffuse).rgb;\n#else\nvec3 diffuse2 = diffuse;\n#endif\nvLightFront = vLightFront *");
+   THREE.ShaderLib.basic.vertexShader = THREE.ShaderLib.basic.vertexShader.replace("vColor = color;", "vColor = pickColor(color);");
+   THREE.ShaderLib.basic.fragmentShader = THREE.ShaderLib.basic.fragmentShader.replace("gl_FragColor = gl_FragColor * texture2D( map, vUv );", "");
 }
 
 hookShader();
@@ -593,7 +601,7 @@ GLmol.prototype.drawBondsAsLine = function(group, atomlist, lineWidth) {
     }
    var lineMaterial = new THREE.LineBasicMaterial({linewidth: lineWidth});
    lineMaterial.vertexColors = true;
-//   lineMaterial.uniforms["map"] = {type: "t", value: "0", texture: this.colormap};
+   lineMaterial.map = this.colormap;
    console.log(lineMaterial);
    var line = new THREE.Line(geo, lineMaterial);
    line.type = THREE.LinePieces;

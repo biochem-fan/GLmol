@@ -376,7 +376,7 @@ glmol01.loadMolecule = function() {
          if (currentResidues.length > 0) {
             var resn = glmol01.ResnTable[currentResn];
             if (!resn) resn = " " + currentResn + " ";
-            str += '<span onClick="glmol01.colorAtoms([' + currentResidues.join(',') + '], 0xff0000); glmol01.show();">' + resn + '</span>';
+            str += '<span onmouseover="glmol01.colorAtoms([' + currentResidues.join(',') + '], 0xff0000); glmol01.show();">' + resn + '</span>';
          }
          currentResidues = [];
       }
