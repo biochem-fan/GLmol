@@ -146,6 +146,13 @@ Projection: <select id="glmol01_projection">
 <button onClick="glmol01.doFunc(function(mol) {mol.zoomInto(mol.getAllAtoms());mol.show()});">Reset view</button>
 </div>
 
+<div class="tabBox" id="glmol01_seqbox" style="left: 50%; width: 200px; z-index:0;">
+<span class="bottomTab">Sequence</span>
+<div class="insideTab">
+<div id="glmol01_seq" style="word-wrap: break-word; padding: 15px;"></div>
+</div>
+</div>
+
 <div id="loading" style="border: 2px solid white; position: absolute; color: white; left: 10%; top: 10%; padding: 5px; z-index:101;">
 <p>Loading structure from server... It may take a while.</p>
 <p>If you believe something went wrong, please make sure PDB ID is correct.<br>
@@ -166,6 +173,7 @@ Please also make sure that WebGL is enabled in your browser.
 addTab('#glmol01_srcbox', '400px', 0);
 addTab('#glmol01_viewbox', '350px', 1);
 addTab('#glmol01_infobox', '400px', 2);
+addTab('#glmol01_seqbox', '600px', 3);
 
 var glmol01 = new GLmol('glmol01', true);
 var query = window.location.search.substring(1);
@@ -347,6 +355,42 @@ console.log("hetatms " + (+new Date() - time)); time = new Date();
 };
 
 glmol01.defineRepresentation = defineRepFromController;
+glmol01.loadMoleculeOld = glmol01.loadMolecule;
+
+glmol01.ResnTable = {ALA: 'A', CYS: 'C', ASP: 'D', GLU: 'E', PHE: 'F', GLY: 'G', HIS: 'H', ILE: 'I', LYS: 'K', LEU: 'L', MET: 'M', ASN: 'N', PRO: 'P', GLN: 'Q', ARG: 'R', SER: 'S', THR: 'T', VAL: 'V', TRP: 'W', TYR: 'Y', 'HOH': 'O'};
+
+glmol01.loadMolecule = function() {
+   this.loadMoleculeOld();
+   
+   var str = '<div style="font-size: 50%;">';
+   var currentChain, currentResi, currentResn, currentResidues = [];
+
+   for (var i = 0; i < 100000; i++) {
+      atom = this.atoms[i]; if (!atom) continue;
+      if (atom.resn == "HOH") continue;
+
+      if (atom.chain != currentChain || atom.resi != currentResi) {
+         if (atom.chain != currentChain) {
+            str += "<br>Chain " + atom.chain + ": ";
+         }
+         if (currentResidues.length > 0) {
+            var resn = glmol01.ResnTable[currentResn];
+            if (!resn) resn = " " + currentResn + " ";
+            str += '<span onClick="glmol01.colorAtoms([' + currentResidues.join(',') + '], 0xff0000); glmol01.show();">' + resn + '</span>';
+         }
+         currentResidues = [];
+      }
+      currentChain = atom.chain;
+      currentResn = atom.resn;
+      currentResi = atom.resi;
+      currentResidues.push(atom.serial);
+   }
+
+   str += '</div>';
+   $('#' + this.id + '_seq').html(str);
+
+};
+
 
 </script>
 

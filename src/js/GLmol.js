@@ -486,7 +486,7 @@ GLmol.prototype.drawUnitcell = function(group) {
     for (var i = 0; i < edges.length; i++) {
        geo.vertices.push(new TV3(vertices[edges[i]][0], vertices[edges[i]][1], vertices[edges[i]][2]));
     }
-   var lineMaterial = new THREE.LineBasicMaterial({linewidth: 1, color: 0xcccccc});
+   var lineMaterial = new THREE.LineBasicMaterial({linewidth: 1, color: 0xcccccc}); // TODO: fix color
    var line = new THREE.Line(geo, lineMaterial);
    line.type = THREE.LinePieces;
    group.add(line);
@@ -593,7 +593,8 @@ GLmol.prototype.drawBondsAsLine = function(group, atomlist, lineWidth) {
     }
    var lineMaterial = new THREE.LineBasicMaterial({linewidth: lineWidth});
    lineMaterial.vertexColors = true;
-
+//   lineMaterial.uniforms["map"] = {type: "t", value: "0", texture: this.colormap};
+   console.log(lineMaterial);
    var line = new THREE.Line(geo, lineMaterial);
    line.type = THREE.LinePieces;
    group.add(line);
