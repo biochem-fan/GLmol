@@ -143,11 +143,12 @@ Projection: <select id="glmol01_projection">
 <input type="radio" name="glmol01_mouseMode" value="1">Translate<br>
 <input type="radio" name="glmol01_mouseMode" value="2">Zoom<br>
 <input type="radio" name="glmol01_mouseMode" value="3">Slab<br><br>
-<button onClick="glmol01.doFunc(function(mol) {mol.zoomInto(mol.getAllAtoms());mol.show()});">Reset view</button>
+<button onClick="glmol01.doFunc(function(mol) {mol.zoomInto(mol.getAllAtoms());mol.show()});">Reset view</button><br>
+<button onClick="$('#seqbox').show();">Sequence</button>
 </div>
 
-<div class="tabBox" id="glmol01_seqbox" style="left: 50%; width: 200px; z-index:0;">
-<span class="bottomTab">Sequence</span>
+<div class="tabBox" style="left: 3%; width: 90%; top: 60%; height: 35%; display:none; position:absolute; z-index:0;" id="seqbox">
+<span class="bottomTab" onclick="$('#seqbox').hide();">Sequence</span>
 <div class="insideTab">
 <div id="glmol01_seq" style="word-wrap: break-word; padding: 15px;"></div>
 </div>
