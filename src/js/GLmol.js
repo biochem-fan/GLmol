@@ -726,7 +726,7 @@ GLmol.prototype.drawStrip = function(group, p1, p2, colors, div, thickness) {
    div = div || this.axisDIV;
    p1 = this.subdivide(p1, div);
    p2 = this.subdivide(p2, div);
-   if (!thickness) this.drawThinStrip(group, p1, p2, colors, div)
+   if (!thickness) { this.drawThinStrip(group, p1, p2, colors, div); return;}
 
    var geo = new THREE.Geometry();
    var vs = geo.vertices, fs = geo.faces;
