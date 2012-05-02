@@ -118,6 +118,7 @@ Color by <select id="glmol01_color">
 <input id="glmol01_showHetatms" type="checkbox" checked>Small molecules(HETATMs) as
 <select id="glmol01_hetatm">
  <option value="stick">sticks</option>
+ <option value="ballAndStick">ball and stick</option>
  <option selected="selected" value="sphere">spheres</option>
  <option value="icosahedron">icosahedrons</option>
  <option value="line">lines</option>
@@ -323,7 +324,9 @@ console.log("mainchain " + (+new Date() - time)); time = new Date();
          this.drawBondsAsLine(target, hetatm, this.curveWidth);
       } else if (hetatmMode == 'icosahedron') {
          this.drawAtomsAsIcosahedron(target, hetatm, this.sphereRadius);
-     }
+     } else if (hetatmMode == 'ballAndStick') {
+         this.drawBondsAsStick(target, hetatm, this.cylinderRadius / 2.0, this.cylinderRadius, true);
+     } 
    }
 console.log("hetatms " + (+new Date() - time)); time = new Date();
 
