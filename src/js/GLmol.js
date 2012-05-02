@@ -38,17 +38,20 @@ function hookShader() { // Lambert Shader and Line Shader ONLY
 //    FaceColors, VertexColors: USE_COLOR is defined, color is passed as "color" attribute
 //    Other cases: color is passed as "diffuse" uniform
 
+//  USE_MAP has to be disabled; otherwise, mesh without uv will not be displayed.
 //  Inject Color picker into vertex shader
-   THREE.ShaderLib.lambert.vertexShader =  THREE.ShaderLib.lambert.vertexShader.replace("void main", "uniform sampler2D map; \n \n\nvec3 pickColor(vec3 color){\n int serial = int(color.b * 255.0 + color.g * 65280.0 + color.r * 16711680.0 + 0.01); float x = ((mod(float(serial), 512.0))* 2.0 + 1.0) / 1024.0, y = (float(serial / 512) * 2.0 + 1.0) / 1024.0;\n \n return texture2D(map, vec2(x, y)).rgb;\n} \n\n\nvoid main");
+   THREE.ShaderLib.lambert.vertexShader =  THREE.ShaderLib.lambert.vertexShader.replace("void main", "#undef USE_MAP\n uniform sampler2D map; \n \n\nvec3 pickColor(vec3 color){\n int serial = int(color.b * 255.0 + color.g * 65280.0 + color.r * 16711680.0 + 0.01); float x = ((mod(float(serial), 512.0))* 2.0 + 1.0) / 1024.0, y = (float(serial / 512) * 2.0 + 1.0) / 1024.0;\n \n return texture2D(map, vec2(x, y)).rgb;\n} \n\n\nvoid main");
 //  Hook Material color ("diffuse" uniform)
    THREE.ShaderLib.lambert.vertexShader =  THREE.ShaderLib.lambert.vertexShader.replace(/\* diffuse/g, "* diffuse2");
    THREE.ShaderLib.lambert.vertexShader =  THREE.ShaderLib.lambert.vertexShader.replace("vLightFront = vLightFront *", "///////////////////////////////////////\n\n#ifndef USE_COLOR\nvec3 diffuse2 = pickColor(diffuse).rgb;\n#else\nvec3 diffuse2 = diffuse;\n#endif\nvLightFront = vLightFront *");
 //  Hook vertex color & face color ("color" attribute)
-   THREE.ShaderLib.lambert.vertexShader = THREE.ShaderLib.lambert.vertexShader.replace("vColor = color;", "vColor = pickColor(color);");
-
+    THREE.ShaderLib.lambert.vertexShader = THREE.ShaderLib.lambert.vertexShader.replace("vColor = color;", "vColor = pickColor(color);");
+   THREE.ShaderLib.lambert.vertexShader = THREE.ShaderLib.lambert.vertexShader.replace("vColor = color * color;", "vColor = pickColor(color) * pickColor(color);");
 //  Disable normal texture mapping 
-THREE.ShaderLib.lambert.fragmentShader = THREE.ShaderLib.lambert.fragmentShader.replace("gl_FragColor = gl_FragColor * texture2D( map, vUv );", "");
-
+   THREE.ShaderLib.lambert.fragmentShader = THREE.ShaderLib.lambert.fragmentShader.replace("void main", "#undef USE_MAP\n void main");
+   THREE.ShaderLib.lambert.fragmentShader = THREE.ShaderLib.lambert.fragmentShader.replace("gl_FragColor = gl_FragColor * texture2D( map, vUv );", "");
+   THREE.ShaderLib.lambert.fragmentShader = THREE.ShaderLib.lambert.fragmentShader.replace("gl_FragColor = gl_FragColor * texelColor;", "a1");
+    
 //  Same for 'basic' shader
 //   For this to work, WebGLRenderer.js has to be patched beforehand.
    THREE.ShaderLib.basic.vertexShader =  THREE.ShaderLib.basic.vertexShader.replace("void main", "uniform sampler2D map; \n \n\nvec3 pickColor(vec3 color){\n int serial = int(color.b * 255.0 + color.g * 65280.0 + color.r * 16711680.0 + 0.01); float x = ((mod(float(serial), 512.0))* 2.0 + 1.0) / 1024.0, y = (float(serial / 512) * 2.0 + 1.0) / 1024.0;\n \n return texture2D(map, vec2(x, y)).rgb;\n} \n\n\nvoid main");
@@ -144,8 +147,12 @@ function GLmol(id, suppressAutoload) {
    this.enableMouse();
    this.colortable = new Uint8Array(512 * 512 * 3);
    this.colormap = new THREE.DataTexture(this.colortable, 512, 512, THREE.RGBFormat);
-   for (var i = 0; i < 100000; i++) {
-      this.setColor(i, 0xff0000);
+//   this.colormap.generateMipmaps = false;
+   this.colormap.onUpdate = function() {console.log('texture updated');};
+   this.colormap.magFilter = this.colormap.minFilter = THREE.NearestFilter;
+   this.colormap.generateMipmaps = false;
+   for (var i = 0; i < 512 * 512; i++) {
+      this.setColor(i, 0x0000ff);
    }
 
    if (suppressAutoload) return;
@@ -370,11 +377,12 @@ GLmol.prototype.subdivide = function(_points, DIV) { // points as Vector3
 
 GLmol.prototype.drawAtomsAsSphere = function(group, atomlist, defaultRadius, forceDefault) {
    var sphereGeometry = new THREE.SphereGeometry(1, this.sphereQuality, this.sphereQuality); // r, seg, ring
+   sphereGeometry.faceVertexUvs = [];
    for (var i = 0; i < atomlist.length; i++) {
       var atom = this.atoms[atomlist[i]];
       if (atom == undefined) continue;
 
-      var sphereMaterial = new THREE.MeshLambertMaterial({color: atom.color, map:this.colormap});
+       var sphereMaterial = new THREE.MeshLambertMaterial({color: atom.color, map:this.colormap});
       var sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
       group.add(sphere);
       var r = (!forceDefault && this.vdwRadii[atom.elem] != undefined) ? this.vdwRadii[atom.elem] : defaultRadius
@@ -620,7 +628,7 @@ GLmol.prototype.drawSmoothCurve = function(group, _points, width, colors, div) {
       geo.vertices.push(points[i]);
       geo.colors.push(new TCo(colors[(i == 0) ? 0 : Math.round((i - 1) / div)]));
   }
-  var lineMaterial = new THREE.LineBasicMaterial({linewidth: width});
+  var lineMaterial = new THREE.LineBasicMaterial({linewidth: width, map: this.colormap});
   lineMaterial.vertexColors = true;
   var line = new THREE.Line(geo, lineMaterial);
   line.type = THREE.LineStrip;
@@ -772,7 +780,7 @@ GLmol.prototype.drawStrip = function(group, p1, p2, colors, div, thickness) {
    div = div || this.axisDIV;
    p1 = this.subdivide(p1, div);
    p2 = this.subdivide(p2, div);
-   if (!thickness) this.drawThinStrip(group, p1, p2, colors, div)
+   if (!thickness) {this.drawThinStrip(group, p1, p2, colors, div); return;}
 
    var geo = new THREE.Geometry();
    var vs = geo.vertices, fs = geo.faces;
@@ -807,7 +815,7 @@ GLmol.prototype.drawStrip = function(group, p1, p2, colors, div, thickness) {
    fs.push(new THREE.Face4(vsize + 1, vsize + 5, vsize + 7, vsize + 3, undefined, fs[fs.length - 3].color));
    geo.computeFaceNormals();
    geo.computeVertexNormals(false);
-   var material =  new THREE.MeshLambertMaterial({map:this.colormap});
+    var material =  new THREE.MeshLambertMaterial({map: this.colormap});
    material.vertexColors = THREE.FaceColors;
    var mesh = new THREE.Mesh(geo, material);
    mesh.doubleSided = true;
@@ -828,7 +836,7 @@ GLmol.prototype.drawThinStrip = function(group, p1, p2, colors, div) {
    }
    geo.computeFaceNormals();
    geo.computeVertexNormals(false);
-   var material =  new THREE.MeshLambertMaterial({map:this.colormap});
+    var material =  new THREE.MeshLambertMaterial({map:this.colormap});
    material.vertexColors = THREE.FaceColors;
    var mesh = new THREE.Mesh(geo, material);
    mesh.doubleSided = true;
