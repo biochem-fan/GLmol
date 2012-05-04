@@ -51,6 +51,7 @@ function GLmol(id, suppressAutoload) {
    this.NEAR = 1, FAR = 800;
    this.CAMERA_Z = -150;
    this.renderer = new THREE.WebGLRenderer({antialias: true});
+   this.renderer.sortObjects = false; // hopefully improve performance
    // 'antialias: true' now works in Firefox too!
    // setting this.aaScale = 2 will enable antialias in older Firefox but GPU load increases.
    this.renderer.domElement.style.width = "100%";
