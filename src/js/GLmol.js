@@ -13,6 +13,10 @@
          Copyright (c) 2011 John Resig
  */
 
+// Workaround for Intel GMA series (gl_FrontFacing causes compilation error)
+THREE.ShaderLib.lambert.fragmentShader = THREE.ShaderLib.lambert.fragmentShader.replace("gl_FrontFacing", "true");
+THREE.ShaderLib.lambert.vertexShader = THREE.ShaderLib.lambert.vertexShader.replace(/\}$/, "#ifdef DOUBLE_SIDED\n if (transformedNormal.z < 0.0) vLightFront = vLightBack;\n #endif\n }");
+
 var TV3 = THREE.Vector3, TF3 = THREE.Face3, TCo = THREE.Color;
 
 THREE.Geometry.prototype.colorAll = function (color) {
@@ -22,12 +26,9 @@ THREE.Geometry.prototype.colorAll = function (color) {
 };
 
 THREE.Matrix4.prototype.isIdentity = function() {
-   for (var i = 1; i <= 4; i++) {
-      for (var j = 1; j <= 4; j++) {
-         var shouldBe = (i == j) ? 1 : 0;
-         if (this['n' + i + j] != shouldBe) return false;
-      }
-   }
+   for (var i = 1; i <= 4; i++)
+      for (var j = 1; j <= 4; j++)
+         if (this['n' + i + j] != (i == j) ? 1 : 0) return false;
    return true;
 };
 
@@ -664,7 +665,7 @@ GLmol.prototype.drawSmoothTube = function(group, _points, colors, radii) {
    }
    geo.computeFaceNormals();
    geo.computeVertexNormals(false);
-   var mat = new THREE.MeshLambertMaterial();// mat.wireframe = true;
+   var mat = new THREE.MeshLambertMaterial();
    mat.vertexColors = THREE.FaceColors;
    var mesh = new THREE.Mesh(geo, mat);
    mesh.doubleSided = true;
@@ -727,7 +728,7 @@ GLmol.prototype.drawStrip = function(group, p1, p2, colors, div, thickness) {
    div = div || this.axisDIV;
    p1 = this.subdivide(p1, div);
    p2 = this.subdivide(p2, div);
-   if (!thickness) { this.drawThinStrip(group, p1, p2, colors, div); return;}
+   if (!thickness) return this.drawThinStrip(group, p1, p2, colors, div);
 
    var geo = new THREE.Geometry();
    var vs = geo.vertices, fs = geo.faces;
@@ -816,7 +817,6 @@ GLmol.prototype.drawCylinder = function(group, from, to, radius, color, cap) {
    var m = new THREE.Matrix4().makeScale(radius, radius, from.distanceTo(to));
    m.rotateX(Math.PI / 2);
    cylinder.matrix.multiplySelf(m);
-   cylinder.doubleSided = true;
    group.add(cylinder);
 };
 
