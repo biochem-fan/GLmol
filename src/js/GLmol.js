@@ -664,7 +664,7 @@ GLmol.prototype.drawSmoothTube = function(group, _points, colors, radii) {
    }
    geo.computeFaceNormals();
    geo.computeVertexNormals(false);
-   var mat = new THREE.MeshLambertMaterial();// mat.wireframe = true;
+   var mat = new THREE.MeshLambertMaterial();
    mat.vertexColors = THREE.FaceColors;
    var mesh = new THREE.Mesh(geo, mat);
    mesh.doubleSided = true;
@@ -816,7 +816,6 @@ GLmol.prototype.drawCylinder = function(group, from, to, radius, color, cap) {
    var m = new THREE.Matrix4().makeScale(radius, radius, from.distanceTo(to));
    m.rotateX(Math.PI / 2);
    cylinder.matrix.multiplySelf(m);
-   cylinder.doubleSided = true;
    group.add(cylinder);
 };
 
