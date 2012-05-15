@@ -461,37 +461,41 @@ GLmol.BoxGeometry = function(group, x, y, z) { // TODO:
 
 };
 
+// Find the bond plane. TODO: Find inner side of a ring
+GLmol.prototype.calcBondDelta = function(atom1, atom2) {
+   var dot;
+   var axis = new TV3(atom1.x - atom2.x, atom1.y - atom2.y, atom1.z - atom2.z);
+   var found = null;
+   for (var i = 0; i < atom1.bonds.length && !found; i++) {
+      var atom = this.atoms[atom1.bonds[i]]; if (!atom) continue;
+      if (atom.serial != atom2.serial && atom.elem != 'H') found = atom;
+   }
+   for (var i = 0; i < atom2.bonds.length && !found; i++) {
+      var atom = this.atoms[atom2.bonds[i]]; if (!atom) continue;
+      if (atom.serial != atom1.serial && atom.elem != 'H') found = atom;
+   }
+   if (found) {
+      var tmp = new TV3(atom1.x - found.x, atom1.y - found.y, atom1.z - found.z);
+      dot = tmp.dot(axis);
+      delta = new TV3(tmp.x - axis.x * dot, tmp.y - axis.y * dot, tmp.z - axis.z * dot);
+   }
+   if (!found || Math.abs(dot - 1) < 0.001) {
+      if (axis.x < 0.01 && axis.y < 0.01) {
+         delta = new TV3(0, - axis.z, axis.y);
+      } else {
+         delta = new TV3(- axis.y, axis.x, 0);
+      }
+   }
+   delta.normalize().multiplyScalar(0.15);
+   return delta;
+}
 
 // TODO: Refactor!
 GLmol.prototype.drawBondsAsLineSub = function(geo, atom1, atom2, order) {
    var mp = new TV3((atom1.x + atom2.x) / 2,
                    (atom1.y + atom2.y) / 2, (atom1.z + atom2.z) / 2);
-   var delta, dot;
-   if (order > 1) { // Find the bond plane. TODO: Find inner side of a ring
-      var axis = new TV3(atom1.x - atom2.x, atom1.y - atom2.y, atom1.z - atom2.z);
-      var found = null;
-      for (var i = 0; i < atom1.bonds.length && !found; i++) {
-         var atom = this.atoms[atom1.bonds[i]]; if (!atom) continue;
-         if (atom.serial != atom2.serial && atom.elem != 'H') found = atom;
-      }
-      for (var i = 0; i < atom2.bonds.length && !found; i++) {
-         var atom = this.atoms[atom2.bonds[i]]; if (!atom) continue;
-         if (atom.serial != atom1.serial && atom.elem != 'H') found = atom;
-      }
-      if (found) {
-         var tmp = new TV3(atom1.x - found.x, atom1.y - found.y, atom1.z - found.z);
-         dot = tmp.dot(axis);
-         delta = new TV3(tmp.x - axis.x * dot, tmp.y - axis.y * dot, tmp.z - axis.z * dot);
-      }
-      if (!found || Math.abs(dot - 1) < 0.001) {
-         if (axis.x < 0.01 && axis.y < 0.01) {
-            delta = new TV3(0, - axis.z, axis.y);
-         } else {
-            delta = new TV3(- axis.y, axis.x, 0);
-         }
-      }
-      delta.normalize().multiplyScalar(0.15);
-   }
+   var delta;
+   if (order > 1) delta = this.calcBondDelta(atom1, atom2);
 
    var color = new TCo(atom1.color);
    geo.vertices.push(new TV3(atom1.x, atom1.y, atom1.z));
