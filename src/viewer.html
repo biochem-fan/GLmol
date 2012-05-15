@@ -54,7 +54,7 @@
  <div class="insideTab" style="overflow: auto;">
   <h1>About</h1>
   <p>GLmol -- Molecular Viewer on WebGL/Javascript<br>
-Version 0.40 (20120429)</p>
+Version 0.42 (20120507)</p>
   <p>This program is written by biochem_fan and released under LGPL. Please visit <a href="http://webglmol.sfjp.jp/">my project page</a> for the details and source code distribution.</p>
   <p>Comments and Suggestions are welcome. Please mail to biochem_fan at users.sourceforge.jp or write in <a href="http://sourceforge.jp/projects/webglmol/forums/">the forum</a>.</p>
   <h1>How to use</h1>
@@ -74,7 +74,9 @@ You can load PDB or SDF/MOL files <br>
 -from local disk (don't worry. your file will not be uploaded),
 <input id="glmol01_file" type="file" size=1><button onClick="loadFile()">Load from file</button><br>
 -from RCSB PDB server,
-PDBID: <input id="glmol01_pdbid" value="2POR" size=4><button onClick="downloadPDB('pdb:' + $('#glmol01_pdbid').val())">Download</button><br>
+PDBID: <input id="glmol01_pdbid" value="2POR" size=4><button onClick="download('pdb:' + $('#glmol01_pdbid').val())">Download</button><br>
+-from PubChem server,
+Compound ID(CID): <input id="glmol01_cid" value="2244" size=4><button onClick="download('cid:' + $('#glmol01_cid').val())">Download</button><br>
 <!-- CHECK: CSS nowrap is not working? -->
 -or from the textarea below.<br><!-- white-space: nowrap not only doesn't work in Firefox but also let Chrome reformatting continuous spaces!!! -->
 <textarea wrap="off" id="glmol01_src" style="width: 100%; height: 8em; overflow:scroll;"></textarea><br>
@@ -170,26 +172,32 @@ addTab('#glmol01_infobox', '400px', 2);
 
 var glmol01 = new GLmol('glmol01', true);
 var query = window.location.search.substring(1);
-if (query == '') downloadPDB('pdb:2POR');
-else downloadPDB(query);
+if (query == '') download('pdb:2POR');
+else download(query);
 
-function downloadPDB(query) {
+function download(query) {
    var baseURL = '';
    if (query.substr(0, 4) == 'pdb:') {
+      query = query.substr(4).toUpperCase();
+      if (!query.match(/^[1-9][A-Za-z0-9]{3}$/)) {
+         alert("Wrong PDB ID"); return;
+      }
+      uri = "http://www.pdb.org/pdb/files/" + query + ".pdb";
+   } else if (query.substr(0, 4) == 'cid:') {
       query = query.substr(4);
-      var baseURL = "http://www.pdb.org/pdb/files/";
+      if (!query.match(/^[1-9]+$/)) {
+         alert("Wrong Compound ID"); return;
+      }
+      uri = "http://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/" + query + 
+        "/SDF?record_type=3d";
    }
-   query = query.toUpperCase();
-   if (query.match(/^[1-9][A-Za-z0-9]{3}$/)) {
-      $('#loading').show();
-      $.get(baseURL + query + ".pdb", function(ret) {
-         $("#glmol01_src").val(ret);
-         glmol01.loadMolecule();
-        $('#loading').hide();
-      });
-   } else {
-      alert("Wrong PDB ID");
-   }
+
+   $('#loading').show();
+   $.get(uri, function(ret) {
+      $("#glmol01_src").val(ret);
+      glmol01.loadMolecule();
+      $('#loading').hide();
+   });
 }
 
 function addTab(tabId, height, zIndex) {
@@ -243,9 +251,10 @@ var time = new Date();
    var all = this.getAllAtoms();
    var allHet = this.getHetatms(all);
    var hetatm = this.removeSolvents(allHet);
+
 console.log("selection " + (+new Date() - time)); time = new Date();
-   this.colorByAtom(all, {});
-   
+
+   this.colorByAtom(all, {});  
    var colorMode = $(idHeader + 'color').val();
    if (colorMode == 'ss') {
       this.colorByStructure(all, 0xcc00cc, 0x00cccc);
