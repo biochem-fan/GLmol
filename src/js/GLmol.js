@@ -471,12 +471,7 @@ GLmol.prototype.drawUnitcell = function(group) {
    group.add(line);
 };
 
-GLmol.BoxGeometry = function(group, x, y, z) { // TODO:
-
-};
-
 // Find the bond plane. TODO: Find inner side of a ring
-// FIXME: Bug with acetonitrile (CID: 6342)
 GLmol.prototype.calcBondDelta = function(atom1, atom2, sep) {
    var dot;
    var axis = new TV3(atom1.x - atom2.x, atom1.y - atom2.y, atom1.z - atom2.z).normalize();
@@ -496,56 +491,36 @@ GLmol.prototype.calcBondDelta = function(atom1, atom2, sep) {
    }
    if (!found || Math.abs(dot - 1) < 0.001) {
       if (axis.x < 0.01 && axis.y < 0.01) {
-         delta = new TV3(0, - axis.z, axis.y);
+         delta = new TV3(0, -axis.z, axis.y);
       } else {
-         delta = new TV3(- axis.y, axis.x, 0);
+         delta = new TV3(-axis.y, axis.x, 0);
       }
    }
    delta.normalize().multiplyScalar(sep);
    return delta;
 };
 
-// TODO: Refactor!
 GLmol.prototype.drawBondsAsLineSub = function(geo, atom1, atom2, order) {
-   var mp = new TV3((atom1.x + atom2.x) / 2,
-                   (atom1.y + atom2.y) / 2, (atom1.z + atom2.z) / 2);
-   var delta;
+   var delta, tmp, vs = geo.vertices, cs = geo.colors;
    if (order > 1) delta = this.calcBondDelta(atom1, atom2, 0.15);
+   var p1 = new TV3(atom1.x, atom1.y, atom1.z);
+   var p2 = new TV3(atom2.x, atom2.y, atom2.z);
+   var mp = p1.clone().addSelf(p2).multiplyScalar(0.5);
 
-   var color = new TCo(atom1.color);
-   geo.vertices.push(new TV3(atom1.x, atom1.y, atom1.z));
-   geo.colors.push(color);
-   geo.vertices.push(mp);
-   geo.colors.push(color);
+   var c1 = new TCo(atom1.color), c2 = new TCo(atom2.color);
+   if (order == 1 || order == 3) {
+      vs.push(p1); cs.push(c1); vs.push(mp); cs.push(c1);
+      vs.push(p2); cs.push(c2); vs.push(mp); cs.push(c2);
+   }
    if (order > 1) {
-      geo.vertices.push(new TV3(atom1.x + delta.x, atom1.y + delta.y, atom1.z + delta.z));
-      geo.colors.push(color);
-      geo.vertices.push(new TV3(mp.x + delta.x, mp.y + delta.y, mp.z + delta.z));
-      geo.colors.push(color);
-   }
-   if (order > 2) {
-      geo.vertices.push(new TV3(atom1.x + delta.x * 2, atom1.y + delta.y * 2, atom1.z + delta.z * 2));
-      geo.colors.push(color);
-      geo.vertices.push(new TV3(mp.x + delta.x * 2, mp.y + delta.y * 2, mp.z + delta.z * 2));
-      geo.colors.push(color);
-   }
-       
-   color = new TCo(atom2.color);
-   geo.vertices.push(new TV3(atom2.x, atom2.y, atom2.z));
-   geo.colors.push(color);
-   geo.vertices.push(mp);
-   geo.colors.push(color);
-   if (order > 1) {
-      geo.vertices.push(new TV3(atom2.x + delta.x, atom2.y + delta.y, atom2.z + delta.z));
-      geo.colors.push(color);
-      geo.vertices.push(new TV3(mp.x + delta.x, mp.y + delta.y, mp.z + delta.z));
-      geo.colors.push(color);
-   }
-   if (order > 2) {
-      geo.vertices.push(new TV3(atom2.x + delta.x * 2, atom2.y + delta.y * 2, atom2.z + delta.z * 3));
-      geo.colors.push(color);
-      geo.vertices.push(new TV3(mp.x + delta.x * 2, mp.y + delta.y * 2, mp.z + delta.z * 2));
-      geo.colors.push(color);
+      vs.push(p1.clone().addSelf(delta)); cs.push(c1);
+      vs.push(tmp = mp.clone().addSelf(delta)); cs.push(c1);
+      vs.push(p2.clone().addSelf(delta)); cs.push(c2);
+      vs.push(tmp); cs.push(c2);
+      vs.push(p1.clone().subSelf(delta)); cs.push(c1);
+      vs.push(tmp = mp.clone().subSelf(delta)); cs.push(c1);
+      vs.push(p2.clone().subSelf(delta)); cs.push(c2);
+      vs.push(tmp); cs.push(c2);
    }
 };
 
