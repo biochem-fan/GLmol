@@ -379,10 +379,28 @@ GLmol.prototype.isConnected = function(atom1, atom2) {
    return 1;
 };
 
+GLmol.prototype.drawBondAsStickSub = function(group, atom1, atom2, bondR, order) {
+   var mp = new TV3((atom1.x + atom2.x) / 2, (atom1.y + atom2.y) / 2, (atom1.z + atom2.z) / 2);
+   var pos1 = new TV3(atom1.x, atom1.y, atom1.z);
+   var pos2 = new TV3(atom2.x, atom2.y, atom2.z);
+   this.drawCylinder(group, pos1, mp, bondR, atom1.color);
+   this.drawCylinder(group, pos2, mp, bondR, atom2.color);
+
+   if (order < 2) return;
+   var delta = this.calcBondDelta(atom1, atom2, bondR * 3);
+   mp.addSelf(delta);
+   this.drawCylinder(group, pos1.addSelf(delta), mp, bondR, atom1.color);
+   this.drawCylinder(group, pos2.addSelf(delta), mp, bondR, atom2.color);
+   if (order < 3) return;
+   mp.addSelf(delta);
+   this.drawCylinder(group, pos1.addSelf(delta), mp, bondR, atom1.color);
+   this.drawCylinder(group, pos2.addSelf(delta), mp, bondR, atom2.color);
+};
+
 GLmol.prototype.drawBondsAsStick = function(group, atomlist, bondR, atomR, ignoreNonbonded) {
    var sphereGeometry = new THREE.SphereGeometry(1, this.sphereQuality, this.sphereQuality);//IcosahedronGeometry();
    var nAtoms = atomlist.length, mp;
-
+   bondR /= 4; // FIXME: add switch
    for (var _i = 0; _i < nAtoms; _i++) {
       var i = atomlist[_i];
       var atom1 = this.atoms[i];
@@ -394,20 +412,16 @@ GLmol.prototype.drawBondsAsStick = function(group, atomlist, bondR, atomR, ignor
          var order = this.isConnected(atom1, atom2);
          if (order == 0) continue;
          atom1.connected = atom2.connected = true;
-         this.drawCylinder(group, new TV3(atom1.x, atom1.y, atom1.z),
-                           mp = new TV3((atom1.x + atom2.x) / 2, (atom1.y + atom2.y) / 2, (atom1.z + atom2.z) / 2), bondR, atom1.color);
-         this.drawCylinder(group, new TV3(atom2.x, atom2.y, atom2.z), mp, bondR, atom2.color);
+         this.drawBondAsStickSub(group, atom1, atom2, bondR, order);
       }
       for (var _j = 0; _j < atom1.bonds.length; _j++) {
-          var j = atom1.bonds[_j];
-          if (j < i + 30) continue; // be conservative!
-          if (atomlist.indexOf(j) == -1) continue;
-          var atom2 = this.atoms[j];
-          if (atom2 == undefined) continue;
-          atom1.connected = atom2.connected = true;
-          this.drawCylinder(group, new TV3(atom1.x, atom1.y, atom1.z),
-                           mp = new TV3((atom1.x + atom2.x) / 2, (atom1.y + atom2.y) / 2, (atom1.z + atom2.z) / 2), bondR, atom1.color);
-          this.drawCylinder(group, new TV3(atom2.x, atom2.y, atom2.z), mp, bondR, atom2.color);
+         var j = atom1.bonds[_j];
+         if (j < i + 30) continue; // be conservative!
+         if (atomlist.indexOf(j) == -1) continue;
+         var atom2 = this.atoms[j];
+         if (atom2 == undefined) continue;
+         atom1.connected = atom2.connected = true;
+         this.drawBondAsStickSub(group, atom1, atom2, bondR, order);
       }
       if (!atom1.connected) continue;
        var sphereMaterial = new THREE.MeshLambertMaterial({color: atom1.color});
@@ -462,9 +476,10 @@ GLmol.BoxGeometry = function(group, x, y, z) { // TODO:
 };
 
 // Find the bond plane. TODO: Find inner side of a ring
-GLmol.prototype.calcBondDelta = function(atom1, atom2) {
+// FIXME: Bug with acetonitrile (CID: 6342)
+GLmol.prototype.calcBondDelta = function(atom1, atom2, sep) {
    var dot;
-   var axis = new TV3(atom1.x - atom2.x, atom1.y - atom2.y, atom1.z - atom2.z);
+   var axis = new TV3(atom1.x - atom2.x, atom1.y - atom2.y, atom1.z - atom2.z).normalize();
    var found = null;
    for (var i = 0; i < atom1.bonds.length && !found; i++) {
       var atom = this.atoms[atom1.bonds[i]]; if (!atom) continue;
@@ -475,7 +490,7 @@ GLmol.prototype.calcBondDelta = function(atom1, atom2) {
       if (atom.serial != atom1.serial && atom.elem != 'H') found = atom;
    }
    if (found) {
-      var tmp = new TV3(atom1.x - found.x, atom1.y - found.y, atom1.z - found.z);
+      var tmp = new TV3(atom1.x - found.x, atom1.y - found.y, atom1.z - found.z).normalize();
       dot = tmp.dot(axis);
       delta = new TV3(tmp.x - axis.x * dot, tmp.y - axis.y * dot, tmp.z - axis.z * dot);
    }
@@ -486,16 +501,16 @@ GLmol.prototype.calcBondDelta = function(atom1, atom2) {
          delta = new TV3(- axis.y, axis.x, 0);
       }
    }
-   delta.normalize().multiplyScalar(0.15);
+   delta.normalize().multiplyScalar(sep);
    return delta;
-}
+};
 
 // TODO: Refactor!
 GLmol.prototype.drawBondsAsLineSub = function(geo, atom1, atom2, order) {
    var mp = new TV3((atom1.x + atom2.x) / 2,
                    (atom1.y + atom2.y) / 2, (atom1.z + atom2.z) / 2);
    var delta;
-   if (order > 1) delta = this.calcBondDelta(atom1, atom2);
+   if (order > 1) delta = this.calcBondDelta(atom1, atom2, 0.15);
 
    var color = new TCo(atom1.color);
    geo.vertices.push(new TV3(atom1.x, atom1.y, atom1.z));
