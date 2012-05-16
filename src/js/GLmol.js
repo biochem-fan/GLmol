@@ -386,6 +386,7 @@ GLmol.prototype.drawBondAsStickSub = function(group, atom1, atom2, bondR, order)
    var mp = p1.clone().addSelf(p2).multiplyScalar(0.5);
 
    var c1 = new TCo(atom1.color), c2 = new TCo(atom2.color);
+   console.log(atom1.serial, atom2.serial, order);
    if (order == 1 || order == 3) {
       this.drawCylinder(group, p1, mp, bondR, atom1.color);
       this.drawCylinder(group, p2, mp, bondR, atom2.color);
@@ -424,7 +425,7 @@ GLmol.prototype.drawBondsAsStick = function(group, atomlist, bondR, atomR, ignor
          var atom2 = this.atoms[j];
          if (atom2 == undefined) continue;
          atom1.connected = atom2.connected = true;
-         this.drawBondAsStickSub(group, atom1, atom2, bondR, (!!multipleBonds) ? order : 1);
+         this.drawBondAsStickSub(group, atom1, atom2, bondR, (!!multipleBonds) ? atom1.bondOrder[_j] : 1);
       }
       if (!atom1.connected) continue;
        var sphereMaterial = new THREE.MeshLambertMaterial({color: atom1.color});
@@ -1372,7 +1373,7 @@ GLmol.prototype.colorChainbow = function(atomlist, colorSidechains) {
 GLmol.prototype.drawSymmetryMates2 = function(group, asu, matrices) {
    if (matrices == undefined) return;
    asu.matrixAutoUpdate = false;
-   var t = new TV3(262.1, 114.9, 189.8); //this.modelGroup.position.clone().invert();
+//   var t = new TV3(262.1, 114.9, 189.8); //this.modelGroup.position.clone().invert();
    var c = t.clone();
    var cnt = 1;
    for (var i = 0; i < matrices.length; i++) {
@@ -1382,10 +1383,9 @@ GLmol.prototype.drawSymmetryMates2 = function(group, asu, matrices) {
       symmetryMate.matrix = mat;
       group.add(symmetryMate);
       c.addSelf(mat.multiplyVector3(t));
-      console.log(symmetryMate.matrixAutoUpdate);
       cnt++;
    }
-   console.log(c.multiplyScalar(-1.0 / cnt));
+//   console.log(c.multiplyScalar(-1.0 / cnt));
 };
 
 
