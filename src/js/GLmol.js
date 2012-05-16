@@ -380,27 +380,31 @@ GLmol.prototype.isConnected = function(atom1, atom2) {
 };
 
 GLmol.prototype.drawBondAsStickSub = function(group, atom1, atom2, bondR, order) {
-   var mp = new TV3((atom1.x + atom2.x) / 2, (atom1.y + atom2.y) / 2, (atom1.z + atom2.z) / 2);
-   var pos1 = new TV3(atom1.x, atom1.y, atom1.z);
-   var pos2 = new TV3(atom2.x, atom2.y, atom2.z);
-   this.drawCylinder(group, pos1, mp, bondR, atom1.color);
-   this.drawCylinder(group, pos2, mp, bondR, atom2.color);
+   var delta, tmp;
+   if (order > 1) delta = this.calcBondDelta(atom1, atom2, bondR * 2.3);
+   var p1 = new TV3(atom1.x, atom1.y, atom1.z);
+   var p2 = new TV3(atom2.x, atom2.y, atom2.z);
+   var mp = p1.clone().addSelf(p2).multiplyScalar(0.5);
 
-   if (order < 2) return;
-   var delta = this.calcBondDelta(atom1, atom2, bondR * 3);
-   mp.addSelf(delta);
-   this.drawCylinder(group, pos1.addSelf(delta), mp, bondR, atom1.color);
-   this.drawCylinder(group, pos2.addSelf(delta), mp, bondR, atom2.color);
-   if (order < 3) return;
-   mp.addSelf(delta);
-   this.drawCylinder(group, pos1.addSelf(delta), mp, bondR, atom1.color);
-   this.drawCylinder(group, pos2.addSelf(delta), mp, bondR, atom2.color);
+   var c1 = new TCo(atom1.color), c2 = new TCo(atom2.color);
+   if (order == 1 || order == 3) {
+      this.drawCylinder(group, p1, mp, bondR, atom1.color);
+      this.drawCylinder(group, p2, mp, bondR, atom2.color);
+   }
+   if (order > 1) {
+      tmp = mp.clone().addSelf(delta);
+      this.drawCylinder(group, p1.clone().addSelf(delta), tmp, bondR, atom1.color);
+      this.drawCylinder(group, p2.clone().addSelf(delta), tmp, bondR, atom2.color);
+      tmp = mp.clone().subSelf(delta);
+      this.drawCylinder(group, p1.clone().subSelf(delta), tmp, bondR, atom1.color);
+      this.drawCylinder(group, p2.clone().subSelf(delta), tmp, bondR, atom2.color);
+   }
 };
 
-GLmol.prototype.drawBondsAsStick = function(group, atomlist, bondR, atomR, ignoreNonbonded) {
-   var sphereGeometry = new THREE.SphereGeometry(1, this.sphereQuality, this.sphereQuality);//IcosahedronGeometry();
+GLmol.prototype.drawBondsAsStick = function(group, atomlist, bondR, atomR, ignoreNonbonded, multipleBonds) {
+   var sphereGeometry = new THREE.SphereGeometry(1, this.sphereQuality, this.sphereQuality);
    var nAtoms = atomlist.length, mp;
-   bondR /= 4; // FIXME: add switch
+   if (!!multipleBonds) bondR /= 2.5;
    for (var _i = 0; _i < nAtoms; _i++) {
       var i = atomlist[_i];
       var atom1 = this.atoms[i];
@@ -412,7 +416,7 @@ GLmol.prototype.drawBondsAsStick = function(group, atomlist, bondR, atomR, ignor
          var order = this.isConnected(atom1, atom2);
          if (order == 0) continue;
          atom1.connected = atom2.connected = true;
-         this.drawBondAsStickSub(group, atom1, atom2, bondR, order);
+         this.drawBondAsStickSub(group, atom1, atom2, bondR, (!!multipleBonds) ? order : 1);
       }
       for (var _j = 0; _j < atom1.bonds.length; _j++) {
          var j = atom1.bonds[_j];
@@ -421,7 +425,7 @@ GLmol.prototype.drawBondsAsStick = function(group, atomlist, bondR, atomR, ignor
          var atom2 = this.atoms[j];
          if (atom2 == undefined) continue;
          atom1.connected = atom2.connected = true;
-         this.drawBondAsStickSub(group, atom1, atom2, bondR, order);
+         this.drawBondAsStickSub(group, atom1, atom2, bondR, (!!multipleBonds) ? order : 1);
       }
       if (!atom1.connected) continue;
        var sphereMaterial = new THREE.MeshLambertMaterial({color: atom1.color});
