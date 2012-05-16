@@ -1,8 +1,7 @@
 /*
-    GLmol - Molecular Viewer on WebGL/Javascript (0.42)
-   (C) Copyright 2011-2012, biochem_fan
-
-   License: dual license of MIT or LGPL3
+ GLmol - Molecular Viewer on WebGL/Javascript (0.43)
+  (C) Copyright 2011-2012, biochem_fan
+      License: dual license of MIT or LGPL3
 
     This program uses
       Three.js 
@@ -371,7 +370,7 @@ GLmol.prototype.isConnected = function(atom1, atom2) {
 
 //   if (atom1.altLoc != atom2.altLoc) return false;
    if (isNaN(distSquared)) return 0;
-   if (distSquared < 0.5) return 0; // maybe duplicate position. FIXME: Is this treatment correct?
+   if (distSquared < 0.5) return 0; // maybe duplicate position.
 
    if (distSquared > 1.3 && (atom1.elem == 'H' || atom2.elem == 'H' || atom1.elem == 'D' || atom2.elem == 'D')) return 0;
    if (distSquared < 3.42 && (atom1.elem == 'S' || atom2.elem == 'S')) return 1;
@@ -475,7 +474,7 @@ GLmol.prototype.drawUnitcell = function(group) {
    group.add(line);
 };
 
-// Find the bond plane. TODO: Find inner side of a ring
+// TODO: Find inner side of a ring
 GLmol.prototype.calcBondDelta = function(atom1, atom2, sep) {
    var dot;
    var axis = new TV3(atom1.x - atom2.x, atom1.y - atom2.y, atom1.z - atom2.z).normalize();
@@ -709,7 +708,7 @@ GLmol.prototype.drawMainchainTube = function(group, atomlist, atomName, radius) 
          }
          points.push(new TV3(atom.x, atom.y, atom.z));
          if (radius == undefined) {
-            radii.push((atom.b > 0) ? atom.b / 100 : 0.3); // CHECK: is linear scaling correct?
+            radii.push((atom.b > 0) ? atom.b / 100 : 0.3);
          } else {
             radii.push(radius);
          }
@@ -1546,7 +1545,7 @@ GLmol.prototype.setSlabAndFog = function() {
 GLmol.prototype.enableMouse = function() {
    var me = this, glDOM = $(this.renderer.domElement); 
 
-   // TODO: Touch panel support. 
+   // TODO: Better touch panel support. 
    // Contribution is needed as I don't own any iOS or Android device with WebGL support.
    glDOM.bind('mousedown touchstart', function(ev) {
       ev.preventDefault();

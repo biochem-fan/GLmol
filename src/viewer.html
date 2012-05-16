@@ -54,7 +54,7 @@
  <div class="insideTab" style="overflow: auto;">
   <h1>About</h1>
   <p>GLmol -- Molecular Viewer on WebGL/Javascript<br>
-Version 0.42 (20120507)</p>
+Version 0.43 (20120517)</p>
   <p>This program is written by biochem_fan and released under LGPL. Please visit <a href="http://webglmol.sfjp.jp/">my project page</a> for the details and source code distribution.</p>
   <p>Comments and Suggestions are welcome. Please mail to biochem_fan at users.sourceforge.jp or write in <a href="http://sourceforge.jp/projects/webglmol/forums/">the forum</a>.</p>
   <h1>How to use</h1>
@@ -121,6 +121,7 @@ Color by <select id="glmol01_color">
 <select id="glmol01_hetatm">
  <option value="stick">sticks</option>
  <option value="ballAndStick">ball and stick</option>
+ <option value="ballAndStick2">ball and stick (multiple bond)</option>
  <option selected="selected" value="sphere">spheres</option>
  <option value="icosahedron">icosahedrons</option>
  <option value="line">lines</option>
@@ -335,7 +336,10 @@ console.log("mainchain " + (+new Date() - time)); time = new Date();
          this.drawAtomsAsIcosahedron(target, hetatm, this.sphereRadius);
      } else if (hetatmMode == 'ballAndStick') {
          this.drawBondsAsStick(target, hetatm, this.cylinderRadius / 2.0, this.cylinderRadius, true);
+     } else if (hetatmMode == 'ballAndStick2') {
+         this.drawBondsAsStick(target, hetatm, this.cylinderRadius / 2.0, this.cylinderRadius, true, true);
      } 
+
    }
 console.log("hetatms " + (+new Date() - time)); time = new Date();
 
