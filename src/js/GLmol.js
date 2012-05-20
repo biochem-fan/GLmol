@@ -1374,16 +1374,16 @@ GLmol.prototype.drawSymmetryMates2 = function(group, asu, matrices) {
    if (matrices == undefined) return;
    asu.matrixAutoUpdate = false;
 //   var t = new TV3(262.1, 114.9, 189.8); //this.modelGroup.position.clone().invert();
-   var c = t.clone();
-   var cnt = 1;
+//   var c = t.clone();
+//   var cnt = 1;
    for (var i = 0; i < matrices.length; i++) {
       var mat = matrices[i];
       if (mat == undefined || mat.isIdentity()) continue;
       var symmetryMate = THREE.SceneUtils.cloneObject(asu);
       symmetryMate.matrix = mat;
       group.add(symmetryMate);
-      c.addSelf(mat.multiplyVector3(t));
-      cnt++;
+//      c.addSelf(mat.multiplyVector3(t));
+//      cnt++;
    }
 //   console.log(c.multiplyScalar(-1.0 / cnt));
 };
