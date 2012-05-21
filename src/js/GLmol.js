@@ -386,7 +386,6 @@ GLmol.prototype.drawBondAsStickSub = function(group, atom1, atom2, bondR, order)
    var mp = p1.clone().addSelf(p2).multiplyScalar(0.5);
 
    var c1 = new TCo(atom1.color), c2 = new TCo(atom2.color);
-   console.log(atom1.serial, atom2.serial, order);
    if (order == 1 || order == 3) {
       this.drawCylinder(group, p1, mp, bondR, atom1.color);
       this.drawCylinder(group, p2, mp, bondR, atom2.color);
