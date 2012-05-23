@@ -492,7 +492,7 @@ GLmol.prototype.calcBondDelta = function(atom1, atom2, sep) {
       dot = tmp.dot(axis);
       delta = new TV3(tmp.x - axis.x * dot, tmp.y - axis.y * dot, tmp.z - axis.z * dot);
    }
-   if (!found || Math.abs(dot - 1) < 0.001) {
+   if (!found || Math.abs(dot - 1) < 0.001 || Math.abs(dot + 1) < 0.001) {
       if (axis.x < 0.01 && axis.y < 0.01) {
          delta = new TV3(0, -axis.z, axis.y);
       } else {
