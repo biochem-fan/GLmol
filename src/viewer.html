@@ -336,9 +336,9 @@ console.log("mainchain " + (+new Date() - time)); time = new Date();
       } else if (hetatmMode == 'icosahedron') {
          this.drawAtomsAsIcosahedron(target, hetatm, this.sphereRadius);
      } else if (hetatmMode == 'ballAndStick') {
-         this.drawBondsAsStick(target, hetatm, this.cylinderRadius / 2.0, this.cylinderRadius, true);
+         this.drawBondsAsStick(target, hetatm, this.cylinderRadius / 2.0, this.cylinderRadius, true, false, 0.3);
      } else if (hetatmMode == 'ballAndStick2') {
-         this.drawBondsAsStick(target, hetatm, this.cylinderRadius / 2.0, this.cylinderRadius, true, true);
+         this.drawBondsAsStick(target, hetatm, this.cylinderRadius / 2.0, this.cylinderRadius, true, true, 0.3);
      } 
 
    }

@@ -324,7 +324,7 @@ GLmol.prototype.subdivide = function(_points, DIV) { // points as Vector3
    return ret;
 };
 
-GLmol.prototype.drawAtomsAsSphere = function(group, atomlist, defaultRadius, forceDefault) {
+GLmol.prototype.drawAtomsAsSphere = function(group, atomlist, defaultRadius, forceDefault, scale) {
    var sphereGeometry = new THREE.SphereGeometry(1, this.sphereQuality, this.sphereQuality); // r, seg, ring
    for (var i = 0; i < atomlist.length; i++) {
       var atom = this.atoms[atomlist[i]];
@@ -333,7 +333,8 @@ GLmol.prototype.drawAtomsAsSphere = function(group, atomlist, defaultRadius, for
       var sphereMaterial = new THREE.MeshLambertMaterial({color: atom.color});
       var sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
       group.add(sphere);
-      var r = (!forceDefault && this.vdwRadii[atom.elem] != undefined) ? this.vdwRadii[atom.elem] : defaultRadius
+      var r = (!forceDefault && this.vdwRadii[atom.elem] != undefined) ? this.vdwRadii[atom.elem] : defaultRadius;
+      if (!forceDefault && scale) r *= scale;
       sphere.scale.x = sphere.scale.y = sphere.scale.z = r;
       sphere.position.x = atom.x;
       sphere.position.y = atom.y;
@@ -400,9 +401,10 @@ GLmol.prototype.drawBondAsStickSub = function(group, atom1, atom2, bondR, order)
    }
 };
 
-GLmol.prototype.drawBondsAsStick = function(group, atomlist, bondR, atomR, ignoreNonbonded, multipleBonds) {
+GLmol.prototype.drawBondsAsStick = function(group, atomlist, bondR, atomR, ignoreNonbonded, multipleBonds, scale) {
    var sphereGeometry = new THREE.SphereGeometry(1, this.sphereQuality, this.sphereQuality);
    var nAtoms = atomlist.length, mp;
+   var forSpheres = [];
    if (!!multipleBonds) bondR /= 2.5;
    for (var _i = 0; _i < nAtoms; _i++) {
       var i = atomlist[_i];
@@ -426,15 +428,9 @@ GLmol.prototype.drawBondsAsStick = function(group, atomlist, bondR, atomR, ignor
          atom1.connected = atom2.connected = true;
          this.drawBondAsStickSub(group, atom1, atom2, bondR, (!!multipleBonds) ? atom1.bondOrder[_j] : 1);
       }
-      if (!atom1.connected) continue;
-       var sphereMaterial = new THREE.MeshLambertMaterial({color: atom1.color});
-       var sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
-       sphere.scale.x = sphere.scale.y = sphere.scale.z = atomR;
-       group.add(sphere);
-       sphere.position.x = atom1.x;
-       sphere.position.y = atom1.y;
-       sphere.position.z = atom1.z;
-    }
+      if (atom1.connected) forSpheres.push(i);
+   }
+   this.drawAtomsAsSphere(group, forSpheres, atomR, !scale, scale);
 };
 
 GLmol.prototype.defineCell = function() {
