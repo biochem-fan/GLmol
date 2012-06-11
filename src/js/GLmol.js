@@ -1494,12 +1494,15 @@ GLmol.prototype.rebuildScene = function() {
 };
 
 GLmol.prototype.loadMolecule = function(repressZoom) {
+   this.loadMoleculeStr(repressZoom, $('#' + this.id + '_src').val());
+};
+
+GLmol.prototype.loadMoleculeStr = function(repressZoom, source) {
    var time = new Date();
 
    this.protein = {sheet: [], helix: [], biomtMatrices: [], symMat: [], pdbID: '', title: ''};
    this.atoms = [];
 
-   var source = $('#' + this.id + '_src').val();
    this.parsePDB2(source);
    this.parseSDF(source);
    console.log("parsed in " + (+new Date() - time) + "ms");
