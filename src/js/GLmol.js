@@ -33,6 +33,12 @@ THREE.Matrix4.prototype.isIdentity = function() {
 
 var GLmol = (function() {
 function GLmol(id, suppressAutoload) {
+     // allows deferred implementation and overriding of methods
+   if (id) this.create(id, suppressAutoload);
+   return true;
+}
+
+GLmol.prototype.create = function(id, suppressAutoload) {
    this.Nucleotides = ['  G', '  A', '  T', '  C', '  U', ' DG', ' DA', ' DT', ' DC', ' DU'];
    this.ElementColors = {"H": 0xCCCCCC, "C": 0xAAAAAA, "O": 0xCC0000, "N": 0x0000CC, "S": 0xCCCC00, "P": 0x6622CC,
                          "F": 0x00CC00, "CL": 0x00CC00, "BR": 0x882200, "I": 0x6600AA,
