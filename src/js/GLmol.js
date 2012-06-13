@@ -3,7 +3,10 @@
   (C) Copyright 2011-2012, biochem_fan
       License: dual license of MIT or LGPL3
 
-    This program uses
+  Contributors:
+    Robert Hanson for parseXYZ, deferred instantiation
+
+  This program uses
       Three.js 
          https://github.com/mrdoob/three.js
          Copyright (c) 2010-2012 three.js Authors. All rights reserved.
@@ -33,7 +36,6 @@ THREE.Matrix4.prototype.isIdentity = function() {
 
 var GLmol = (function() {
 function GLmol(id, suppressAutoload) {
-     // allows deferred implementation and overriding of methods
    if (id) this.create(id, suppressAutoload);
    return true;
 }
@@ -171,6 +173,41 @@ GLmol.prototype.parseSDF = function(str) {
       atoms[to].bondOrder.push(order);
    }
 
+   protein.sdf = true;
+};
+
+GLmol.prototype.parseXYZ = function(str) {
+   var atoms = this.atoms;
+   var protein = this.protein;
+
+   var lines = str.split("\n");
+   if (lines.length < 3) return;
+   var atomCount = parseInt(lines[0].substr(0, 3));
+   if (isNaN(atomCount) || atomCount <= 0) return;
+   if (lines.length < atomCount + 2) return;
+   var offset = 2;
+   for (var i = 1; i <= atomCount; i++) {
+      var line = lines[offset++];
+      var tokens = line.replace(/\s+/g," ").split(" ")
+      var atom = {};
+      atom.serial = i;
+      atom.atom = atom.elem = tokens[0];
+      atom.x = parseFloat(tokens[1]);
+      atom.y = parseFloat(tokens[2]);
+      atom.z = parseFloat(tokens[3]);
+      atom.hetflag = true;
+      atom.bonds = [];
+      atom.bondOrder = [];
+      atoms[i] = atom;
+   }
+   for (var i = 1; i < atomCount; i++) // hopefully XYZ is small enough
+      for (var j = i + 1; j <= atomCount; j++)
+         if (this.isConnected(atoms[i], atoms[j])) {
+	    atoms[i].bonds.push(j);
+	    atoms[i].bondOrder.push(1);
+    	    atoms[j].bonds.push(i);
+     	    atoms[j].bondOrder.push(1);
+         }
    protein.sdf = true;
 };
 
@@ -1511,6 +1548,7 @@ GLmol.prototype.loadMoleculeStr = function(repressZoom, source) {
 
    this.parsePDB2(source);
    this.parseSDF(source);
+   this.parseXYZ(source);
    console.log("parsed in " + (+new Date() - time) + "ms");
    
    var title = $('#' + this.id + '_pdbTitle');
