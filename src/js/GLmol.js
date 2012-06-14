@@ -277,16 +277,8 @@ GLmol.prototype.parsePDB2 = function(str) {
          protein.spacegroup = line.substr(55, 11);
          this.defineCell();
       } else if (recordName == 'REMARK') {
-         if (line.substr(13, 5) == 'BIOMT') {
-            var n = parseInt(line[18]) - 1;
-            var m = parseInt(line.substr(21, 2));
-            if (protein.biomtMatrices[m] == undefined) protein.biomtMatrices[m] = new THREE.Matrix4().identity();
-            protein.biomtMatrices[m].elements[n] = parseFloat(line.substr(24, 9));
-            protein.biomtMatrices[m].elements[n + 4] = parseFloat(line.substr(34, 9));
-            protein.biomtMatrices[m].elements[n + 8] = parseFloat(line.substr(44, 9));
-            protein.biomtMatrices[m].elements[n + 12] = parseFloat(line.substr(54, 10));
-
-         } else if (line.substr(13, 5) == 'SMTRY') {
+         var type = parseInt(line.substr(7, 3));
+         if (type == 290 && line.substr(13, 5) == 'SMTRY') {
             var n = parseInt(line[18]) - 1;
             var m = parseInt(line.substr(21, 2));
             if (protein.symMat[m] == undefined) protein.symMat[m] = new THREE.Matrix4().identity();
@@ -294,6 +286,18 @@ GLmol.prototype.parsePDB2 = function(str) {
             protein.symMat[m].elements[n + 4] = parseFloat(line.substr(34, 9));
             protein.symMat[m].elements[n + 8] = parseFloat(line.substr(44, 9));
             protein.symMat[m].elements[n + 12] = parseFloat(line.substr(54, 10));
+         } else if (type == 350 && line.substr(13, 5) == 'BIOMT') {
+            var n = parseInt(line[18]) - 1;
+            var m = parseInt(line.substr(21, 2));
+            if (protein.biomtMatrices[m] == undefined) protein.biomtMatrices[m] = new THREE.Matrix4().identity();
+            protein.biomtMatrices[m].elements[n] = parseFloat(line.substr(24, 9));
+            protein.biomtMatrices[m].elements[n + 4] = parseFloat(line.substr(34, 9));
+            protein.biomtMatrices[m].elements[n + 8] = parseFloat(line.substr(44, 9));
+            protein.biomtMatrices[m].elements[n + 12] = parseFloat(line.substr(54, 10));
+         } else if (type == 350 && line.substr(11, 11) == 'BIOMOLECULE') {
+             protein.biomtMatrices = []; protein.biomtChains = '';
+         } else if (type == 350 && line.substr(34, 6) == 'CHAINS') {
+             protein.biomtChains += line.substr(41, 40);
          }
       } else if (recordName == 'HEADER') {
          protein.pdbID = line.substr(62, 4);

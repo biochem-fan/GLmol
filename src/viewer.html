@@ -251,6 +251,7 @@ function defineRepFromController() {
 
 var time = new Date();
    var all = this.getAllAtoms();
+   if ($(idHeader + 'biomt').attr('checked')) all = this.getChain(all, this.protein.biomtChains);
    var allHet = this.getHetatms(all);
    var hetatm = this.removeSolvents(allHet);
 
