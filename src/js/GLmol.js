@@ -1267,11 +1267,13 @@ GLmol.prototype.getResidueBySS = function(atomlist, ss) {
 };
 
 GLmol.prototype.getChain = function(atomlist, chain) {
-   var ret = [];
+   var ret = [], chains = {};
+   chain = chain.toString(); // concat if Array
+   for (var i = 0, lim = chain.length; i < lim; i++) chains[chain.substr(i, 1)] = true;
    for (var i in atomlist) {
       var atom = this.atoms[atomlist[i]]; if (atom == undefined) continue;
 
-      if (chain.indexOf(atom.chain) != -1) ret.push(atom.serial);
+      if (chains[atom.chain]) ret.push(atom.serial);
    }
    return ret;
 };
