@@ -1209,7 +1209,7 @@ GLmol.prototype.getSidechains = function(atomlist) {
       var atom = this.atoms[atomlist[i]]; if (atom == undefined) continue;
 
       if (atom.hetflag) continue;
-      if (atom.atom == 'C' || atom.atom == 'O' || atom.atom == 'N') continue;
+      if (atom.atom == 'C' || atom.atom == 'O' || (atom.atom == 'N' && atom.resn != "PRO")) continue;
       ret.push(atom.serial);
    }
    return ret;
