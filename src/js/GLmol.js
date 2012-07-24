@@ -1,5 +1,5 @@
 /*
- GLmol - Molecular Viewer on WebGL/Javascript (0.44)
+ GLmol - Molecular Viewer on WebGL/Javascript (0.46)
   (C) Copyright 2011-2012, biochem_fan
       License: dual license of MIT or LGPL3
 
@@ -188,7 +188,8 @@ GLmol.prototype.parseXYZ = function(str) {
    var offset = 2;
    for (var i = 1; i <= atomCount; i++) {
       var line = lines[offset++];
-      var tokens = line.replace(/\s+/g," ").split(" ")
+      var tokens = line.replace(/^\s+/, "").replace(/\s+/g," ").split(" ");
+      console.log(tokens);
       var atom = {};
       atom.serial = i;
       atom.atom = atom.elem = tokens[0];
@@ -1549,7 +1550,7 @@ GLmol.prototype.loadMolecule = function(repressZoom) {
 GLmol.prototype.loadMoleculeStr = function(repressZoom, source) {
    var time = new Date();
 
-   this.protein = {sheet: [], helix: [], biomtMatrices: [], symMat: [], pdbID: '', title: ''};
+   this.protein = {sheet: [], helix: [], biomtChains: '', biomtMatrices: [], symMat: [], pdbID: '', title: ''};
    this.atoms = [];
 
    this.parsePDB2(source);

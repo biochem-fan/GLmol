@@ -54,7 +54,7 @@
  <div class="insideTab" style="overflow: auto;">
   <h1>About</h1>
   <p>GLmol -- Molecular Viewer on WebGL/Javascript<br>
-Version 0.44 (20120530)</p>
+Version 0.46 (20120725)</p>
   <p>This program is written by biochem_fan and released under LGPL. Please visit <a href="http://webglmol.sfjp.jp/">my project page</a> for the details and source code distribution.</p>
   <p>Comments and Suggestions are welcome. Please mail to biochem_fan at users.sourceforge.jp or write in <a href="http://sourceforge.jp/projects/webglmol/forums/">the forum</a>.</p>
   <h1>How to use</h1>
@@ -70,7 +70,7 @@ Version 0.44 (20120530)</p>
 <div class="tabBox" id="glmol01_srcbox" style="left: 10%; z-index:0;">
 <span class="bottomTab">Load</span>
 <div class="insideTab">
-You can load PDB or SDF/MOL(MDL not SYBYL) files <br>
+You can load PDB, SDF/MOL(MDL not SYBYL) or XYZ files <br>
 -from local disk (don't worry. your file will not be uploaded),
 <input id="glmol01_file" type="file" size=1><button onClick="loadFile()">Load from file</button><br>
 -from RCSB PDB server,
@@ -128,7 +128,7 @@ Color by <select id="glmol01_color">
 </select><br>
 Multiple bond option is for SDF/MOL file ONLY.<br>
 <input id="glmol01_cell" type="checkbox">Unit cell<br>
-<input id="glmol01_biomt" type="checkbox">Biological assembly 
+<input id="glmol01_biomt" type="checkbox">First biological assembly<br>
 <input id="glmol01_packing" type="checkbox">Crystal packing<br>
 <input id="glmol01_symopHetatms" type="checkbox">Show HETATMs in symmetry mates (slower)<br>
 Background color: <select id="glmol01_bgcolor">
