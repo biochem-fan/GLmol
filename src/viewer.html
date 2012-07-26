@@ -128,7 +128,7 @@ Color by <select id="glmol01_color">
 </select><br>
 Multiple bond option is for SDF/MOL file ONLY.<br>
 <input id="glmol01_cell" type="checkbox">Unit cell<br>
-<input id="glmol01_biomt" type="checkbox">First biological assembly<br>
+<input id="glmol01_biomt" type="checkbox">Biological assembly (the last one defined)<br>
 <input id="glmol01_packing" type="checkbox">Crystal packing<br>
 <input id="glmol01_symopHetatms" type="checkbox">Show HETATMs in symmetry mates (slower)<br>
 Background color: <select id="glmol01_bgcolor">
@@ -251,7 +251,7 @@ function defineRepFromController() {
 
 var time = new Date();
    var all = this.getAllAtoms();
-   if ($(idHeader + 'biomt').attr('checked')) all = this.getChain(all, this.protein.biomtChains);
+   if ($(idHeader + 'biomt').attr('checked') && this.protein.biomtChains != "") all = this.getChain(all, this.protein.biomtChains);
    var allHet = this.getHetatms(all);
    var hetatm = this.removeSolvents(allHet);
 
