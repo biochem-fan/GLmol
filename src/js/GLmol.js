@@ -28,9 +28,9 @@ THREE.Geometry.prototype.colorAll = function (color) {
 };
 
 THREE.Matrix4.prototype.isIdentity = function() {
-   for (var i = 1; i <= 4; i++)
-      for (var j = 1; j <= 4; j++)
-         if (this['n' + i + j] != (i == j) ? 1 : 0) return false;
+   for (var i = 0; i < 4; i++)
+      for (var j = 0; j < 4; j++) 
+         if (this.elements[i * 4 + j] != (i == j) ? 1 : 0) return false;
    return true;
 };
 
@@ -1237,9 +1237,12 @@ GLmol.prototype.getAtomsWithin = function(atomlist, extent) {
 GLmol.prototype.getExtent = function(atomlist) {
    var xmin = ymin = zmin = 9999;
    var xmax = ymax = zmax = -9999;
+   var xsum = ysum = zsum = cnt = 0;
 
    for (var i in atomlist) {
       var atom = this.atoms[atomlist[i]]; if (atom == undefined) continue;
+      cnt++;
+      xsum += atom.x; ysum += atom.y; zsum += atom.z;
 
       xmin = (xmin < atom.x) ? xmin : atom.x;
       ymin = (ymin < atom.y) ? ymin : atom.y;
@@ -1248,7 +1251,7 @@ GLmol.prototype.getExtent = function(atomlist) {
       ymax = (ymax > atom.y) ? ymax : atom.y;
       zmax = (zmax > atom.z) ? zmax : atom.z;
    }
-   return [[xmin, ymin, zmin], [xmax, ymax, zmax]];
+   return [[xmin, ymin, zmin], [xmax, ymax, zmax], [xsum / cnt, ysum / cnt, zsum / cnt]];
 };
 
 GLmol.prototype.getResiduesById = function(atomlist, resi) {
@@ -1356,7 +1359,7 @@ GLmol.prototype.colorByChain = function(atomlist, colorSidechains) {
       if (atom.hetflag) continue;
       if (colorSidechains || atom.atom == 'CA' || atom.atom == 'O3\'') {
          var color = new TCo(0);
-         color.setHSV((atom.chain.charCodeAt(0)) % 15 / 15.0, 1, 0.9);
+         color.setHSV((atom.chain.charCodeAt(0) * 5) % 17 / 17.0, 1, 0.9);
          atom.color = color.getHex();
       }
    }
@@ -1418,19 +1421,20 @@ GLmol.prototype.colorChainbow = function(atomlist, colorSidechains) {
 GLmol.prototype.drawSymmetryMates2 = function(group, asu, matrices) {
    if (matrices == undefined) return;
    asu.matrixAutoUpdate = false;
-//   var t = new TV3(262.1, 114.9, 189.8); //this.modelGroup.position.clone().invert();
-//   var c = t.clone();
-//   var cnt = 1;
+
+   var cnt = 1;
+   this.protein.appliedMatrix = new THREE.Matrix4();
    for (var i = 0; i < matrices.length; i++) {
       var mat = matrices[i];
       if (mat == undefined || mat.isIdentity()) continue;
+      console.log(mat);
       var symmetryMate = THREE.SceneUtils.cloneObject(asu);
       symmetryMate.matrix = mat;
       group.add(symmetryMate);
-//      c.addSelf(mat.multiplyVector3(t));
-//      cnt++;
+      for (var j = 0; j < 16; j++) this.protein.appliedMatrix.elements[j] += mat.elements[j];
+      cnt++;
    }
-//   console.log(c.multiplyScalar(-1.0 / cnt));
+   this.protein.appliedMatrix.multiplyScalar(cnt);
 };
 
 
@@ -1516,10 +1520,15 @@ GLmol.prototype.initializeScene = function() {
 
 GLmol.prototype.zoomInto = function(atomlist, keepSlab) {
    // TODO: expand if symmetry mates are present
-   var tmp = this.getExtent(atomlist);
-   var center = new TV3((tmp[0][0] + tmp[1][0]) / 2, (tmp[0][1] + tmp[1][1]) / 2, (tmp[0][2] + tmp[1][2]) / 2);
+   var tmp = this.getExtent(atomlist); // atomlist is the problem
+   var center = new TV3(tmp[2][0], tmp[2][1], tmp[2][2]);//(tmp[0][0] + tmp[1][0]) / 2, (tmp[0][1] + tmp[1][1]) / 2, (tmp[0][2] + tmp[1][2]) / 2);
+   console.log(center.x, center.y, center.z);
+   console.log(this.protein.appliedMatrix);
+   if (this.protein.appliedMatrix) {center = this.protein.appliedMatrix.multiplyVector3(center);}
+   console.log(center.x, center.y, center.z);
    this.modelGroup.position = center.multiplyScalar(-1);
    var x = tmp[1][0] - tmp[0][0], y = tmp[1][1] - tmp[0][1], z = tmp[1][2] - tmp[0][2];
+
    var maxD = Math.sqrt(x * x + y * y + z * z);
    if (maxD < 25) maxD = 25;
 
