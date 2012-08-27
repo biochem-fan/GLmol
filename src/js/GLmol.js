@@ -1,5 +1,5 @@
 /*
- GLmol - Molecular Viewer on WebGL/Javascript (0.46)
+ GLmol - Molecular Viewer on WebGL/Javascript (0.47)
   (C) Copyright 2011-2012, biochem_fan
       License: dual license of MIT or LGPL3
 
@@ -1523,13 +1523,9 @@ GLmol.prototype.initializeScene = function() {
 };
 
 GLmol.prototype.zoomInto = function(atomlist, keepSlab) {
-   // TODO: expand if symmetry mates are present
-   var tmp = this.getExtent(atomlist); // atomlist is the problem
+   var tmp = this.getExtent(atomlist);
    var center = new TV3(tmp[2][0], tmp[2][1], tmp[2][2]);//(tmp[0][0] + tmp[1][0]) / 2, (tmp[0][1] + tmp[1][1]) / 2, (tmp[0][2] + tmp[1][2]) / 2);
-   console.log(center.x, center.y, center.z);
-   console.log(this.protein.appliedMatrix);
    if (this.protein.appliedMatrix) {center = this.protein.appliedMatrix.multiplyVector3(center);}
-   console.log(center.x, center.y, center.z);
    this.modelGroup.position = center.multiplyScalar(-1);
    var x = tmp[1][0] - tmp[0][0], y = tmp[1][1] - tmp[0][1], z = tmp[1][2] - tmp[0][2];
 
