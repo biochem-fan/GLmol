@@ -143,7 +143,7 @@ GLmol.prototype.parseSDF = function(str) {
    var lines = str.split("\n");
    if (lines.length < 4) return;
    var atomCount = parseInt(lines[3].substr(0, 3));
-   if (isNaN(atomCount) || atomCount <= 0) return; // might be a PDB file.
+   if (isNaN(atomCount) || atomCount <= 0) return;
    var bondCount = parseInt(lines[3].substr(3, 3));
    var offset = 4;
    if (lines.length < 4 + atomCount + bondCount) return;
@@ -173,7 +173,8 @@ GLmol.prototype.parseSDF = function(str) {
       atoms[to].bondOrder.push(order);
    }
 
-   protein.sdf = true;
+   protein.smallMolecule = true;
+   return true;
 };
 
 GLmol.prototype.parseXYZ = function(str) {
@@ -209,7 +210,8 @@ GLmol.prototype.parseXYZ = function(str) {
     	    atoms[j].bonds.push(i);
      	    atoms[j].bondOrder.push(1);
          }
-   protein.sdf = true;
+   protein.smallMolecule = true;
+   return true;
 };
 
 GLmol.prototype.parsePDB2 = function(str) {
@@ -332,7 +334,9 @@ GLmol.prototype.parsePDB2 = function(str) {
          if (atom.resi == protein.helix[j][1]) atom.ssbegin = true;
          else if (atom.resi == protein.helix[j][3]) atom.ssend = true;
       }
-   } 
+   }
+   protein.smallMolecule = false;
+   return true;
 };
 
 // Catmull-Rom subdivision
@@ -411,7 +415,7 @@ GLmol.prototype.isConnected = function(atom1, atom2) {
    var s = atom1.bonds.indexOf(atom2.serial);
    if (s != -1) return atom1.bondOrder[s];
 
-   if (this.protein.sdf && (atom1.hetflag || atom2.hetflag)) return 0; // CHECK: or should I ?
+   if (this.protein.smallMolecule && (atom1.hetflag || atom2.hetflag)) return 0; // CHECK: or should I ?
 
    var distSquared = (atom1.x - atom2.x) * (atom1.x - atom2.x) + 
                      (atom1.y - atom2.y) * (atom1.y - atom2.y) + 
@@ -1563,8 +1567,7 @@ GLmol.prototype.loadMoleculeStr = function(repressZoom, source) {
    this.atoms = [];
 
    this.parsePDB2(source);
-   this.parseSDF(source);
-   this.parseXYZ(source);
+   if (!this.parseSDF(source)) this.parseXYZ(source);
    console.log("parsed in " + (+new Date() - time) + "ms");
    
    var title = $('#' + this.id + '_pdbTitle');
