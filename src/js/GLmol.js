@@ -1469,6 +1469,57 @@ GLmol.prototype.drawSymmetryMatesWithTranslation2 = function(group, asu, matrice
    }
 };
 
+GLmol.prototype.createTextTex = function(text, size, color) {
+   var canvas = document.createElement("canvas");
+   canvas.style.backgroundColor = "rgba(0, 0, 0, 1)";
+   var ctx = canvas.getContext("2d");
+   ctx.font = size + "px Arial";
+   canvas.width = ctx.measureText(text).width;
+   canvas.height = size; // This resets fonts, so we have to set it again
+   ctx.fillStyle = color ? color : "rgba(0, 0, 0, 1)";
+   ctx.font = size + "px Arial";
+   ctx.fillText(text, 0, size * 0.9);
+   document.getElementById("glmol01").appendChild(canvas);
+   var tex = new THREE.Texture(canvas);
+   tex.needsUpdate = true;
+   return tex;
+};
+
+GLmol.prototype.getBillboardMesh = function () {
+   if (this.bbmesh) return this.bbmesh;
+
+   var geo = new THREE.Geometry();
+   for (var i = 0; i < 6; i++)
+      geo.vertices.push(new THREE.Vector3(0, 0, 0));
+   geo.faces.push(new THREE.Face3(0, 1, 2));
+   geo.faces.push(new THREE.Face3(0, 2, 3));
+   geo.faceVertexUvs[0].push([new THREE.UV(0, 0), new THREE.UV(1, 1), new THREE.UV(0, 1)]);
+   geo.faceVertexUvs[0].push([new THREE.UV(0, 0), new THREE.UV(1, 0), new THREE.UV(1, 1)]);
+   return (this.bbmesh = geo);
+};
+
+GLmol.prototype.vs_billboard = "uniform float width, height;\nvarying vec2 vUv;\n" +
+"void main() {\n mat4 mv = modelViewMatrix;\n mv[0][0] = mv[1][1] = mv[2][2] = 1.0;\n" +
+"mv[0][1] = mv[0][2] = mv[1][0] = mv[1][2] = mv[2][0] =  mv[2][1] = 0.0;\n"+
+"mat4 mat = projectionMatrix * mv;\n vUv = uv;\n"+
+"float aspect = projectionMatrix[1][1] / projectionMatrix[0][0];\n"+
+"gl_Position = mat * vec4(position, 1.0) + vec4(uv.x * width, uv.y * height * aspect, 0.0, 0.0);\n"+
+"//gl_Position.z = 1.0;\n}";
+
+GLmol.prototype.fs_billboard = "uniform sampler2D map;\n varying vec2 vUv;\n"+
+"void main() {\n gl_FragColor = texture2D(map, vec2(vUv.x, 1.0 - vUv.y));\n"+
+"if (gl_FragColor.a < 0.5) discard; \n }";
+
+GLmol.prototype.billboard = function (tex) {
+   var geo = this.getBillboardMesh();
+   var sm = new THREE.ShaderMaterial({uniforms: 
+     {map: {type: 't', value: 0, texture: tex}, 
+      width: {type: 'f', value: tex.image.width}, height: {type: 'f', value: tex.image.height}}});
+   sm.vertexShader = this.vs_billboard;
+   sm.fragmentShader = this.fs_billboard;
+   return new THREE.Mesh(geo, sm);
+};
+
 GLmol.prototype.defineRepresentation = function() {
    var all = this.getAllAtoms();
    var hetatm = this.removeSolvents(this.getHetatms(all));

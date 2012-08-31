@@ -246,6 +246,8 @@ $('#glmol01_reload').click(function(ev) {
    glmol01.show();
 });
 
+var t, m;
+
 function defineRepFromController() {
    var idHeader = "#" + this.id + '_';
 
@@ -363,6 +365,11 @@ console.log("hetatms " + (+new Date() - time)); time = new Date();
       this.drawSymmetryMatesWithTranslation2(this.modelGroup, asu, this.protein.symMat);
    }
    this.modelGroup.add(asu);
+
+   t = this.createTextTex("Ca #302", "24", "#ffffff");
+   m = this.billboard(t);
+   m.position.set(5.011, -23.190, 25.968)
+   this.modelGroup.add(m);
 };
 
 glmol01.defineRepresentation = defineRepFromController;
