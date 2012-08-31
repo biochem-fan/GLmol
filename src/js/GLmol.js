@@ -1503,8 +1503,9 @@ GLmol.prototype.vs_billboard = "uniform float width, height;\nvarying vec2 vUv;\
 "mv[0][1] = mv[0][2] = mv[1][0] = mv[1][2] = mv[2][0] =  mv[2][1] = 0.0;\n"+
 "mat4 mat = projectionMatrix * mv;\n vUv = uv;\n"+
 "float aspect = projectionMatrix[1][1] / projectionMatrix[0][0];\n"+
-"gl_Position = mat * vec4(position, 1.0) + vec4(uv.x * width, uv.y * height * aspect, 0.0, 0.0);\n"+
-"//gl_Position.z = 1.0;\n}";
+"gl_Position = mat * vec4(position, 1.0);\n gl_Position /= gl_Position.w;\n"+
+"gl_Position += vec4(uv.x * width / 700.0, uv.y * height * aspect / 700.0, 0.0, 0.0);\n"+
+"gl_Position.z = -0.9;\n}";
 
 GLmol.prototype.fs_billboard = "uniform sampler2D map;\n varying vec2 vUv;\n"+
 "void main() {\n gl_FragColor = texture2D(map, vec2(vUv.x, 1.0 - vUv.y));\n"+
