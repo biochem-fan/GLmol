@@ -1471,17 +1471,19 @@ GLmol.prototype.drawSymmetryMatesWithTranslation2 = function(group, asu, matrice
 
 GLmol.prototype.createTextTex = function(text, size, color) {
    var canvas = document.createElement("canvas");
-   canvas.style.backgroundColor = "rgba(0, 0, 0, 1)";
+   canvas.style.backgroundColor = "rgba(0, 0, 0, 0.0)";
    var ctx = canvas.getContext("2d");
    ctx.font = size + "px Arial";
    canvas.width = ctx.measureText(text).width;
    canvas.height = size; // This resets fonts, so we have to set it again
-   ctx.fillStyle = color ? color : "rgba(0, 0, 0, 1)";
+   ctx.fillStyle = color ? color : "rgba(0, 0, 0, 1.0)";
+   ctx.strokeStyle = ctx.fillStyle;
    ctx.font = size + "px Arial";
    ctx.fillText(text, 0, size * 0.9);
    document.getElementById("glmol01").appendChild(canvas);
    var tex = new THREE.Texture(canvas);
    tex.needsUpdate = true;
+   tex.magFilter = tex.minFilter = THREE.LinearFilter;
    return tex;
 };
 
@@ -1504,12 +1506,12 @@ GLmol.prototype.vs_billboard = "uniform float width, height;\nvarying vec2 vUv;\
 "mat4 mat = projectionMatrix * mv;\n vUv = uv;\n"+
 "float aspect = projectionMatrix[1][1] / projectionMatrix[0][0];\n"+
 "gl_Position = mat * vec4(position, 1.0);\n gl_Position /= gl_Position.w;\n"+
-"gl_Position += vec4(uv.x * width / 700.0, uv.y * height * aspect / 700.0, 0.0, 0.0);\n"+
+"gl_Position += vec4(uv.x * width / 1000.0, uv.y * height * aspect / 1000.0, 0.0, 0.0);\n"+
 "gl_Position.z = -0.9;\n}";
 
 GLmol.prototype.fs_billboard = "uniform sampler2D map;\n varying vec2 vUv;\n"+
 "void main() {\n gl_FragColor = texture2D(map, vec2(vUv.x, 1.0 - vUv.y));\n"+
-"if (gl_FragColor.a < 0.5) discard; \n }";
+"if (gl_FragColor.a < 0.5) discard;// else gl_FragColor = vec4(1.0, 1.0, 1.0, gl_FragColor.a);\n }";
 
 GLmol.prototype.billboard = function (tex) {
    var geo = this.getBillboardMesh();
@@ -1576,7 +1578,7 @@ GLmol.prototype.initializeScene = function() {
 
 GLmol.prototype.zoomInto = function(atomlist, keepSlab) {
    var tmp = this.getExtent(atomlist);
-   var center = new TV3(tmp[2][0], tmp[2][1], tmp[2][2]);//(tmp[0][0] + tmp[1][0]) / 2, (tmp[0][1] + tmp[1][1]) / 2, (tmp[0][2] + tmp[1][2]) / 2);
+   var center = new TV3(tmp[2][0], tmp[2][1], tmp[2][2]);
    if (this.protein.appliedMatrix) {center = this.protein.appliedMatrix.multiplyVector3(center);}
    this.modelGroup.position = center.multiplyScalar(-1);
    var x = tmp[1][0] - tmp[0][0], y = tmp[1][1] - tmp[0][1], z = tmp[1][2] - tmp[0][2];
