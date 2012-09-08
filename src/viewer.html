@@ -365,11 +365,6 @@ console.log("hetatms " + (+new Date() - time)); time = new Date();
       this.drawSymmetryMatesWithTranslation2(this.modelGroup, asu, this.protein.symMat);
    }
    this.modelGroup.add(asu);
-
-   t = this.createTextTex("Ca #302", "50", "#ffffff");
-   m = this.billboard(t);
-   m.position.set(5.011, -23.190, 25.968)
-   this.modelGroup.add(m);
 };
 
 glmol01.defineRepresentation = defineRepFromController;

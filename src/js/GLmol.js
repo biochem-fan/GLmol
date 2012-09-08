@@ -1653,6 +1653,15 @@ GLmol.prototype.setSlabAndFog = function() {
    this.scene.fog.far = this.camera.far;
 };
 
+GLmol.prototype.adjustPos = function(ev) {
+   var x = ev.pageX, y = ev.pageY;
+   if (ev.originalEvent.targetTouches && ev.originalEvent.targetTouches[0]) {
+      x = ev.originalEvent.targetTouches[0].pageX;
+      y = ev.originalEvent.targetTouches[0].pageY;
+   }
+   ev.x = x; ev.y = y;
+};
+
 GLmol.prototype.enableMouse = function() {
    var me = this, glDOM = $(this.renderer.domElement); 
 
@@ -1661,16 +1670,12 @@ GLmol.prototype.enableMouse = function() {
    glDOM.bind('mousedown touchstart', function(ev) {
       ev.preventDefault();
       if (!me.scene) return;
-      var x = ev.pageX, y = ev.pageY;
-      if (ev.originalEvent.targetTouches && ev.originalEvent.targetTouches[0]) {
-         x = ev.originalEvent.targetTouches[0].pageX;
-         y = ev.originalEvent.targetTouches[0].pageY;
-      }
-      if (x == undefined) return;
+      me.adjustPos(ev);
+      if (ev.x == undefined) return;
       me.isDragging = true;
       me.mouseButton = ev.which;
-      me.mouseStartX = x;
-      me.mouseStartY = y;
+      me.mouseStartX = ev.x;
+      me.mouseStartY = ev.y;
       me.cq = me.rotationGroup.quaternion;
       me.cz = me.rotationGroup.position.z;
       me.currentModelPos = me.modelGroup.position.clone();
@@ -1693,6 +1698,34 @@ GLmol.prototype.enableMouse = function() {
    glDOM.bind("contextmenu", function(ev) {ev.preventDefault();});
    $('body').bind('mouseup touchend', function(ev) {
       me.isDragging = false;
+
+      me.adjustPos(ev); var x = ev.x, y = ev.y;
+      if (x == undefined) return;
+      var dx = x - me.mouseStartX, dy = y - me.mouseStartY;
+      var r = Math.sqrt(dx * dx + dy * dy);      
+      if (r > 2) return;
+      x -= me.container.position().left; y -= me.container.position().top;
+
+      var mvMat = new THREE.Matrix4().multiply(me.camera.matrixWorldInverse, me.modelGroup.matrixWorld);
+      var pmvMat = new THREE.Matrix4().multiply(me.camera.projectionMatrix, mvMat);
+      var pmvMatInv = new THREE.Matrix4().getInverse(pmvMat);
+      var tx = x / me.WIDTH * 2 - 1, ty = 1 - y / me.HEIGHT * 2;
+      var nearest = [1];
+      for (var i = 0, ilim = me.atoms.length; i < ilim; i++) {
+         var atom = me.atoms[i]; if (atom == undefined) continue;
+         if (atom.resn == "HOH") continue;
+
+         var v = new TV3(atom.x, atom.y, atom.z);
+         pmvMat.multiplyVector3(v);
+         var r2 = (v.x - tx) * (v.x - tx) + (v.y - ty) * (v.y - ty);
+         if (r2 > 0.0002) continue;
+         if (r2 < nearest[0]) nearest = [r2, atom, v];
+      }
+      var atom = nearest[1]; if (atom == undefined) return;
+      var bb = me.billboard(me.createTextTex(atom.chain + ":" + atom.resn + ":" + atom.resi, "24", "#ffffff"));
+      bb.position.set(atom.x, atom.y, atom.z);
+      me.modelGroup.add(bb);
+      me.show();
    });
 
    glDOM.bind('mousemove touchmove', function(ev) { // touchmove
@@ -1703,11 +1736,7 @@ GLmol.prototype.enableMouse = function() {
       var modeRadio = $('input[name=' + me.id + '_mouseMode]:checked');
       if (modeRadio.length > 0) mode = parseInt(modeRadio.val());
 
-      var x = ev.pageX, y = ev.pageY;
-      if (ev.originalEvent.targetTouches && ev.originalEvent.targetTouches[0]) {
-         x = ev.originalEvent.targetTouches[0].pageX;
-         y = ev.originalEvent.targetTouches[0].pageY;
-      }
+      me.adjustPos(ev); var x = ev.x, y = ev.y;
       if (x == undefined) return;
       var dx = (x - me.mouseStartX) / me.WIDTH;
       var dy = (y - me.mouseStartY) / me.HEIGHT;
