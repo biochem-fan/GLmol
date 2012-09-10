@@ -1710,7 +1710,7 @@ GLmol.prototype.enableMouse = function() {
       var pmvMat = new THREE.Matrix4().multiply(me.camera.projectionMatrix, mvMat);
       var pmvMatInv = new THREE.Matrix4().getInverse(pmvMat);
       var tx = x / me.WIDTH * 2 - 1, ty = 1 - y / me.HEIGHT * 2;
-      var nearest = [1];
+      var nearest = [1, {}, new TV3(0, 0, 1000)];
       for (var i = 0, ilim = me.atoms.length; i < ilim; i++) {
          var atom = me.atoms[i]; if (atom == undefined) continue;
          if (atom.resn == "HOH") continue;
@@ -1718,11 +1718,13 @@ GLmol.prototype.enableMouse = function() {
          var v = new TV3(atom.x, atom.y, atom.z);
          pmvMat.multiplyVector3(v);
          var r2 = (v.x - tx) * (v.x - tx) + (v.y - ty) * (v.y - ty);
+         if (r2 > 0.0005) continue;
+         if (v.z < nearest[2].z) nearest = [r2, atom, v];
          if (r2 > 0.0002) continue;
          if (r2 < nearest[0]) nearest = [r2, atom, v];
       }
       var atom = nearest[1]; if (atom == undefined) return;
-      var bb = me.billboard(me.createTextTex(atom.chain + ":" + atom.resn + ":" + atom.resi, "24", "#ffffff"));
+      var bb = me.billboard(me.createTextTex(atom.chain + ":" + atom.resn + ":" + atom.resi, "30", "#ffffff"));
       bb.position.set(atom.x, atom.y, atom.z);
       me.modelGroup.add(bb);
       me.show();
