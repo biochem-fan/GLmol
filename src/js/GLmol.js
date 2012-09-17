@@ -1724,7 +1724,7 @@ GLmol.prototype.enableMouse = function() {
          if (r2 < nearest[0]) nearest = [r2, atom, v];
       }
       var atom = nearest[1]; if (atom == undefined) return;
-      var bb = me.billboard(me.createTextTex(atom.chain + ":" + atom.resn + ":" + atom.resi, "30", "#ffffff"));
+      var bb = me.billboard(me.createTextTex(atom.chain + ":" + atom.resn + ":" + atom.resi + ":" + atom.atom, "30", "#ffffff"));
       bb.position.set(atom.x, atom.y, atom.z);
       me.modelGroup.add(bb);
       me.show();
