@@ -1480,7 +1480,7 @@ GLmol.prototype.createTextTex = function(text, size, color) {
    ctx.strokeStyle = ctx.fillStyle;
    ctx.font = size + "px Arial";
    ctx.fillText(text, 0, size * 0.9);
-   document.getElementById("glmol01").appendChild(canvas);
+//   document.getElementById("glmol01").appendChild(canvas);
    var tex = new THREE.Texture(canvas);
    tex.needsUpdate = true;
    tex.magFilter = tex.minFilter = THREE.LinearFilter;
