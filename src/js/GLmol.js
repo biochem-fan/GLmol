@@ -498,8 +498,8 @@ GLmol.prototype.defineCell = function() {
     p.cx = p.c * Math.cos(Math.PI / 180.0 * p.beta);
     p.cy = p.c * (Math.cos(Math.PI / 180.0 * p.alpha) - 
                Math.cos(Math.PI / 180.0 * p.gamma) 
-             * Math.cos(Math.PI / 180.0 * p.beta)
-             / Math.sin(Math.PI / 180.0 * p.gamma));
+             * Math.cos(Math.PI / 180.0 * p.beta))
+             / Math.sin(Math.PI / 180.0 * p.gamma);
     p.cz = Math.sqrt(p.c * p.c * Math.sin(Math.PI / 180.0 * p.beta)
                * Math.sin(Math.PI / 180.0 * p.beta) - p.cy * p.cy);
 };
