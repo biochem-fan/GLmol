@@ -1563,7 +1563,7 @@ GLmol.prototype.initializeScene = function() {
 GLmol.prototype.zoomInto = function(atomlist, keepSlab) {
    var tmp = this.getExtent(atomlist);
    var center = new TV3(tmp[2][0], tmp[2][1], tmp[2][2]);//(tmp[0][0] + tmp[1][0]) / 2, (tmp[0][1] + tmp[1][1]) / 2, (tmp[0][2] + tmp[1][2]) / 2);
-   if (this.protein.appliedMatrix) {center = this.protein.appliedMatrix.multiplyVector3(center);}
+   if (this.protein.appliedMatrix) {center = this.protein.appliedMatrix.applyProjection(center);}
    this.modelGroup.position = center.multiplyScalar(-1);
    var x = tmp[1][0] - tmp[0][0], y = tmp[1][1] - tmp[0][1], z = tmp[1][2] - tmp[0][2];
 
@@ -1709,7 +1709,7 @@ GLmol.prototype.enableMouse = function() {
          var translationByScreen = new TV3(- dx * scaleFactor, - dy * scaleFactor, 0);
          var q = me.rotationGroup.quaternion;
          var qinv = new THREE.Quaternion(q.x, q.y, q.z, q.w).inverse().normalize(); 
-         var translation = qinv.multiplyVector3(translationByScreen);
+         var translation = translationByScreen.applyQuaternion(qinv);
          me.modelGroup.position.x = me.currentModelPos.x + translation.x;
          me.modelGroup.position.y = me.currentModelPos.y + translation.y;
          me.modelGroup.position.z = me.currentModelPos.z + translation.z;
