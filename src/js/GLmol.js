@@ -242,6 +242,74 @@ GLmol.prototype.parseSDF3000 = function(str) {
     return true;
 };
 
+GLmol.prototype.parseMOL2 = function(str) {
+    var atoms = this.atoms;
+    var protein = this.protein;
+
+    var lines = str.split('\n')
+    if (!lines[0].includes("@<TRIPOS>MOLECULE")) return;
+    var atom_count = parseInt(lines[2].split(/(?: )+/g)[0], 10);
+    var bond_count = parseInt(lines[2].split(/(?: )+/g)[1], 10);
+    var atom_block = false;
+    var bond_block = false;
+
+    for (var i = 0; i < lines.length; ++i) {
+        if (lines[i].includes("@<TRIPOS>ATOM")) {
+			atom_block = true;
+            bond_block = false;
+			continue;
+		}
+		if (lines[i].includes("@<TRIPOS>BOND")) {
+			atom_block = false;
+            bond_block = true;
+			continue
+		}
+
+        var line_data = lines[i].split(/(?:\s)+/g);
+        line_data = line_data.slice(1, line_data.length-1);
+
+        if (atom_block){
+            var atom = {};
+            atom.serial = parseInt(line_data[0], 10);
+            atom.x = parseFloat(line_data[2], 10);
+            atom.y = parseFloat(line_data[3], 10);
+            atom.z = parseFloat(line_data[4], 10);
+            atom.hetflag = true;
+            atom.atom = atom.elem = line_data[5].split(/(?:\.)/g)[0];
+            atom.bonds = [];
+            atom.bondOrder = [];
+            atoms[atom.serial] = atom;
+            if (parseInt(line_data[0], 10) == atom_count) {
+                atom_block = false;
+            }
+
+            continue;
+        }
+
+        if (bond_block){
+            var from = parseInt(line_data[1], 10);
+            var to = parseInt(line_data[2], 10);
+            var order = line_data[3];
+            if (order.includes('ar')) {order = 1.5;}
+            else {order = parseInt(order, 10);}
+
+            atoms[from].bonds.push(to);
+            atoms[from].bondOrder.push(order);
+            atoms[to].bonds.push(from);
+            atoms[to].bondOrder.push(order);
+
+            if (parseInt(line_data[0], 10) == bond_count) {
+                bond_block = false;
+            }
+            continue;
+        }
+
+    }
+
+    protein.smallMolecule = true;
+    return true;
+};
+
 GLmol.prototype.parseXYZ = function(str) {
    var atoms = this.atoms;
    var protein = this.protein;
@@ -1668,7 +1736,7 @@ GLmol.prototype.loadMoleculeStr = function(repressZoom, source) {
    this.atoms = [];
 
    this.parsePDB2(source);
-   if (!this.parseSDF(source) && !this.parseSDF3000(source)) this.parseXYZ(source);
+   if (!this.parseSDF(source) && !this.parseSDF3000(source) && !this.parseMOL2(source)) this.parseXYZ(source);
    console.log("parsed in " + (+new Date() - time) + "ms");
 
    var title = $('#' + this.id + '_pdbTitle');

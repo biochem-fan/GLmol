@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 
-<!--  
-   GLmol - Molecular Viewer on WebGL/Javascript 
+<!--
+   GLmol - Molecular Viewer on WebGL/Javascript
    (C) Copyright 2011-2012, biochem_fan
 
    License: dual license of MIT or LGPL3
 
     This program uses
-      Three.js 
+      Three.js
          https://github.com/mrdoob/three.js
          Copyright (c) 2010-2011 three.js Authors. All rights reserved.
       jQuery
@@ -20,7 +20,7 @@
  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
  <meta charset="utf-8">
  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, target-densitydpi=device-dpi">
- 
+
  <title>GLmol - Molecular Viewer on WebGL/Javascript</title>
  <style type="text/css">
    html, body {width:100%; height:100%; margin: 0px;}
@@ -30,13 +30,13 @@
    a {color: white;}
 
    #glmol01 {width: 100%; height: 100%; background-color: black; position: absolute;}
-   .settings {position: absolute; right: 0px; top: 10%; 
+   .settings {position: absolute; right: 0px; top: 10%;
       background-color: grey;
       -moz-transform: rotate(-90deg); -webkit-transform: rotate(-90deg);
       margin:0px; padding:10px;
       -moz-transform-origin: 110% 100%; -webkit-transform-origin: 110% 100%;
       -webkit-border-radius: 10px 10px 0px 0px; -moz-border-radius: 10px 10px 0px 0px;}
-   .controller {position: absolute; width: 0px; right: 0px; top: 10%; 
+   .controller {position: absolute; width: 0px; right: 0px; top: 10%;
       background-color: rgba(0, 0, 0, 0.65); color: white;}
 
    .tabBox {position: absolute; padding: 0px; color: white; bottom: 0px; height: 20px; width: 60%;}
@@ -70,7 +70,7 @@ Version 0.47 (20120827)</p>
 <div class="tabBox" id="glmol01_srcbox" style="left: 10%; z-index:0;">
 <span class="bottomTab">Load</span>
 <div class="insideTab">
-You can load PDB, SDF/MOL(MDL not SYBYL) or XYZ files <br>
+You can load PDB, MOL2, SDF/MOL(MDL not SYBYL) or XYZ files <br>
 -from local disk (don't worry. your file will not be uploaded),
 <input id="glmol01_file" type="file" size=1><button onClick="loadFile()">Load from file</button><br>
 -from RCSB PDB server,
@@ -103,7 +103,7 @@ Color by <select id="glmol01_color">
  <option value="tube">B factor Tube</option>
  <option value="bonds">bonds (everything)</option>
 </select><br>
-<input id="glmol01_showBases" type="checkbox" checked>Nucleic acid bases as 
+<input id="glmol01_showBases" type="checkbox" checked>Nucleic acid bases as
 <select id="glmol01_base">
  <option value="nuclStick">sticks</option>
  <option selected="selected" value="nuclLine">lines</option>
@@ -190,7 +190,7 @@ function download(query) {
       if (!query.match(/^[1-9]+$/)) {
          alert("Wrong Compound ID"); return;
       }
-      uri = "http://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/" + query + 
+      uri = "http://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/" + query +
         "/SDF?record_type=3d";
    }
 
@@ -257,7 +257,7 @@ var time = new Date();
 
 console.log("selection " + (+new Date() - time)); time = new Date();
 
-   this.colorByAtom(all, {});  
+   this.colorByAtom(all, {});
    var colorMode = $(idHeader + 'color').val();
    if (colorMode == 'ss') {
       this.colorByStructure(all, 0xcc00cc, 0x00cccc);
@@ -341,7 +341,7 @@ console.log("mainchain " + (+new Date() - time)); time = new Date();
          this.drawBondsAsStick(target, hetatm, this.cylinderRadius / 2.0, this.cylinderRadius, true, false, 0.3);
      } else if (hetatmMode == 'ballAndStick2') {
          this.drawBondsAsStick(target, hetatm, this.cylinderRadius / 2.0, this.cylinderRadius, true, true, 0.3);
-     } 
+     }
 
    }
 console.log("hetatms " + (+new Date() - time)); time = new Date();
@@ -349,7 +349,7 @@ console.log("hetatms " + (+new Date() - time)); time = new Date();
    var projectionMode = $(idHeader + 'projection').val();
    if (projectionMode == 'perspective') this.camera = this.perspectiveCamera;
    else if (projectionMode == 'orthoscopic') this.camera = this.orthoscopicCamera;
-  
+
    this.setBackground(parseInt($(idHeader + 'bgcolor').val()));
 
    if ($(idHeader + 'cell').attr('checked')) {
