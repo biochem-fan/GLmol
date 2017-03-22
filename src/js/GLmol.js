@@ -160,7 +160,7 @@ GLmol.prototype.parseSDF = function(str) {
       atom.y = parseFloat(line.substr(10, 10));
       atom.z = parseFloat(line.substr(20, 10));
       atom.hetflag = true;
-      atom.atom = atom.elem = line.substr(31, 3).replace(/ /g, "");
+      atom.atom = atom.elem = line.substr(31, 3).replace(/ /g, "").toUpperCase();
       atom.bonds = [];
       atom.bondOrder = [];
       atoms[i] = atom;
@@ -218,7 +218,7 @@ GLmol.prototype.parseSDF3000 = function(str) {
             atom.y = parseFloat(line_data[5], 10);
             atom.z = parseFloat(line_data[6], 10);
             atom.hetflag = true;
-            atom.atom = atom.elem = line_data[3];
+            atom.atom = atom.elem = line_data[3].toUpperCase();
             atom.bonds = [];
             atom.bondOrder = [];
             atoms[atom.serial] = atom;
@@ -266,7 +266,7 @@ GLmol.prototype.parseMOL2 = function(str) {
 		}
 
         var line_data = lines[i].split(/(?:\s)+/g);
-        line_data = line_data.slice(1, line_data.length-1);
+        line_data = line_data.slice(1, line_data.length);
 
         if (atom_block){
             var atom = {};
@@ -275,7 +275,7 @@ GLmol.prototype.parseMOL2 = function(str) {
             atom.y = parseFloat(line_data[3], 10);
             atom.z = parseFloat(line_data[4], 10);
             atom.hetflag = true;
-            atom.atom = atom.elem = line_data[5].split(/(?:\.)/g)[0];
+            atom.atom = atom.elem = line_data[5].split(/(?:\.)/g)[0].toUpperCase();
             atom.bonds = [];
             atom.bondOrder = [];
             atoms[atom.serial] = atom;
@@ -327,7 +327,7 @@ GLmol.prototype.parseXYZ = function(str) {
       console.log(tokens);
       var atom = {};
       atom.serial = i;
-      atom.atom = atom.elem = tokens[0];
+      atom.atom = atom.elem = tokens[0].toUpperCase();
       atom.x = parseFloat(tokens[1]);
       atom.y = parseFloat(tokens[2]);
       atom.z = parseFloat(tokens[3]);
