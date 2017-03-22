@@ -378,7 +378,7 @@ GLmol.prototype.parsePDB2 = function(str) {
          }
          if (line[0] == 'H') hetflag = true;
          else hetflag = false;
-         atoms[serial] = {'resn': resn, 'x': x, 'y': y, 'z': z, 'elem': elem,
+         atoms[serial] = {'resn': resn, 'x': x, 'y': y, 'z': z, 'elem': elem.toUpperCase(),
   'hetflag': hetflag, 'chain': chain, 'resi': resi, 'serial': serial, 'atom': atom,
   'bonds': [], 'ss': 'c', 'color': 0xFFFFFF, 'bonds': [], 'bondOrder': [], 'b': b /*', altLoc': altLoc*/};
       } else if (recordName == 'SHEET ') {
