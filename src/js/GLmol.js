@@ -7,7 +7,7 @@
     Robert Hanson for parseXYZ, deferred instantiation
 
   This program uses
-      Three.js 
+      Three.js
          https://github.com/mrdoob/three.js
          Copyright (c) 2010-2012 three.js Authors. All rights reserved.
       jQuery
@@ -21,7 +21,7 @@ THREE.ShaderLib.lambert.vertexShader = THREE.ShaderLib.lambert.vertexShader.repl
 
 var TV3 = THREE.Vector3, TF3 = THREE.Face3, TCo = THREE.Color;
 
-THREE.Geometry.prototype.colorAll = function (color) { 
+THREE.Geometry.prototype.colorAll = function (color) {
    var i;
    for (i = 0; i < this.faces.length; i++) {
       this.faces[i].color = color;
@@ -31,7 +31,7 @@ THREE.Geometry.prototype.colorAll = function (color) {
 THREE.Matrix4.prototype.isIdentity = function() {
    var i, j;
    for (i = 0; i < 4; i++)
-      for (j = 0; j < 4; j++) 
+      for (j = 0; j < 4; j++)
          if (this.elements[i * 4 + j] != (i == j) ? 1 : 0) return false;
    return true;
 };
@@ -100,7 +100,7 @@ GLmol.prototype.create = function(id, suppressAutoload) {
    this.slabFar = +50;
 
    // Default values
-   this.sphereRadius = 1.5; 
+   this.sphereRadius = 1.5;
    this.cylinderRadius = 0.4;
    this.lineWidth = 1.5 * this.aaScale;
    this.curveWidth = 3 * this.aaScale;
@@ -115,7 +115,7 @@ GLmol.prototype.create = function(id, suppressAutoload) {
    this.helixSheetWidth = 1.3;
    this.nucleicAcidWidth = 0.8;
    this.thickness = 0.4;
- 
+
    // UI variables
    this.cq = new THREE.Quaternion(1, 0, 0, 0);
    this.dq = new THREE.Quaternion(1, 0, 0, 0);
@@ -181,6 +181,135 @@ GLmol.prototype.parseSDF = function(str) {
    return true;
 };
 
+// Parses V3000 (MDL) .mol and .sdf files.
+GLmol.prototype.parseSDF3000 = function(str) {
+    var atoms = this.atoms;
+    var protein = this.protein;
+
+    var lines = str.split('\n')
+    var v3000_check = lines[3].split(/(?: )+/g).length - 1;
+    if (lines[3].split(/(?: )+/g)[v3000_check] != "V3000") return;
+    var atom_block = false;
+    var bond_block = false;
+
+    for (var i = 0; i < lines.length; ++i) {
+        if (lines[i].includes("M  V30 BEGIN ATOM")) {
+			atom_block = true;
+			continue;
+		}
+		if (lines[i].includes("M  V30 END ATOM")) {
+			atom_block = false;
+			continue
+		}
+		if (lines[i].includes("M  V30 BEGIN BOND")) {
+			bond_block = true;
+			continue;
+		}
+		if (lines[i].includes("M  V30 END BOND")) {
+			bond_block = false;
+			continue
+		}
+
+        if (atom_block) {
+            var line_data = lines[i].split(/(?: )+/g);
+            var atom = {};
+            atom.serial = parseInt(line_data[2], 10);
+            atom.x = parseFloat(line_data[4], 10);
+            atom.y = parseFloat(line_data[5], 10);
+            atom.z = parseFloat(line_data[6], 10);
+            atom.hetflag = true;
+            atom.atom = atom.elem = line_data[3];
+            atom.bonds = [];
+            atom.bondOrder = [];
+            atoms[atom.serial] = atom;
+            continue;
+        }
+
+        if (bond_block) {
+            var line_data = lines[i].split(/(?: )+/g);
+            var from = parseInt(line_data[4], 10);
+            var to = parseInt(line_data[5], 10);
+            var order = parseInt(line_data[3], 10);
+            atoms[from].bonds.push(to);
+            atoms[from].bondOrder.push(order);
+            atoms[to].bonds.push(from);
+            atoms[to].bondOrder.push(order);
+            continue;
+        }
+    }
+
+    protein.smallMolecule = true;
+    return true;
+};
+
+GLmol.prototype.parseMOL2 = function(str) {
+    var atoms = this.atoms;
+    var protein = this.protein;
+
+    var lines = str.split('\n')
+    if (!lines[0].includes("@<TRIPOS>MOLECULE")) return;
+    var atom_count = parseInt(lines[2].split(/(?: )+/g)[0], 10);
+    var bond_count = parseInt(lines[2].split(/(?: )+/g)[1], 10);
+    var atom_block = false;
+    var bond_block = false;
+
+    for (var i = 0; i < lines.length; ++i) {
+        if (lines[i].includes("@<TRIPOS>ATOM")) {
+			atom_block = true;
+            bond_block = false;
+			continue;
+		}
+		if (lines[i].includes("@<TRIPOS>BOND")) {
+			atom_block = false;
+            bond_block = true;
+			continue
+		}
+
+        var line_data = lines[i].split(/(?:\s)+/g);
+        line_data = line_data.slice(1, line_data.length-1);
+
+        if (atom_block){
+            var atom = {};
+            atom.serial = parseInt(line_data[0], 10);
+            atom.x = parseFloat(line_data[2], 10);
+            atom.y = parseFloat(line_data[3], 10);
+            atom.z = parseFloat(line_data[4], 10);
+            atom.hetflag = true;
+            atom.atom = atom.elem = line_data[5].split(/(?:\.)/g)[0];
+            atom.bonds = [];
+            atom.bondOrder = [];
+            atoms[atom.serial] = atom;
+            if (parseInt(line_data[0], 10) == atom_count) {
+                atom_block = false;
+            }
+
+            continue;
+        }
+
+        if (bond_block){
+            var from = parseInt(line_data[1], 10);
+            var to = parseInt(line_data[2], 10);
+            var order = line_data[3];
+            if (order.includes('ar')) {order = 1.5;}
+            else {order = parseInt(order, 10);}
+
+            atoms[from].bonds.push(to);
+            atoms[from].bondOrder.push(order);
+            atoms[to].bonds.push(from);
+            atoms[to].bondOrder.push(order);
+
+            if (parseInt(line_data[0], 10) == bond_count) {
+                bond_block = false;
+            }
+            continue;
+        }
+
+    }
+
+    protein.smallMolecule = true;
+    return true;
+};
+
 GLmol.prototype.parseXYZ = function(str) {
    var atoms = this.atoms;
    var protein = this.protein;
@@ -238,7 +367,7 @@ GLmol.prototype.parsePDB2 = function(str) {
          atom = line.substr(12, 4).replace(/ /g, "");
          resn = line.substr(17, 3);
          chain = line.substr(21, 1);
-         resi = parseInt(line.substr(22, 5)); 
+         resi = parseInt(line.substr(22, 5));
          x = parseFloat(line.substr(30, 8));
          y = parseFloat(line.substr(38, 8));
          z = parseFloat(line.substr(46, 8));
@@ -259,7 +388,7 @@ GLmol.prototype.parsePDB2 = function(str) {
          var endResi = parseInt(line.substr(33, 4));
          protein.sheet.push([startChain, startResi, endChain, endResi]);
      } else if (recordName == 'CONECT') {
-// MEMO: We don't have to parse SSBOND, LINK because both are also 
+// MEMO: We don't have to parse SSBOND, LINK because both are also
 // described in CONECT. But what about 2JYT???
          var from = parseInt(line.substr(6, 5));
          for (j = 0; j < 4; j++) {
@@ -318,7 +447,7 @@ GLmol.prototype.parsePDB2 = function(str) {
       }
    }
 
-   // Assign secondary structures 
+   // Assign secondary structures
    for (i = 0; i < atoms.length; i++) {
       atom = atoms[i]; if (atom == undefined) continue;
 
@@ -367,13 +496,13 @@ GLmol.prototype.subdivide = function(_points, DIV) { // points as Vector3
       var v1 = new TV3().sub(p3, p1).multiplyScalar(0.5);
       for (j = 0; j < DIV; j++) {
          var t = 1.0 / DIV * j;
-         var x = p1.x + t * v0.x 
+         var x = p1.x + t * v0.x
                   + t * t * (-3 * p1.x + 3 * p2.x - 2 * v0.x - v1.x)
                   + t * t * t * (2 * p1.x - 2 * p2.x + v0.x + v1.x);
-         var y = p1.y + t * v0.y 
+         var y = p1.y + t * v0.y
                   + t * t * (-3 * p1.y + 3 * p2.y - 2 * v0.y - v1.y)
                   + t * t * t * (2 * p1.y - 2 * p2.y + v0.y + v1.y);
-         var z = p1.z + t * v0.z 
+         var z = p1.z + t * v0.z
                   + t * t * (-3 * p1.z + 3 * p2.z - 2 * v0.z - v1.z)
                   + t * t * t * (2 * p1.z - 2 * p2.z + v0.z + v1.z);
          ret.push(new TV3(x, y, z));
@@ -426,8 +555,8 @@ GLmol.prototype.isConnected = function(atom1, atom2) {
 
    if (this.protein.smallMolecule && (atom1.hetflag || atom2.hetflag)) return 0; // CHECK: or should I ?
 
-   var distSquared = (atom1.x - atom2.x) * (atom1.x - atom2.x) + 
-                     (atom1.y - atom2.y) * (atom1.y - atom2.y) + 
+   var distSquared = (atom1.x - atom2.x) * (atom1.x - atom2.x) +
+                     (atom1.y - atom2.y) * (atom1.y - atom2.y) +
                      (atom1.z - atom2.z) * (atom1.z - atom2.z);
 
 //   if (atom1.altLoc != atom2.altLoc) return false;
@@ -506,8 +635,8 @@ GLmol.prototype.defineCell = function() {
     p.by = p.b * Math.sin(Math.PI / 180.0 * p.gamma);
     p.bz = 0;
     p.cx = p.c * Math.cos(Math.PI / 180.0 * p.beta);
-    p.cy = p.c * (Math.cos(Math.PI / 180.0 * p.alpha) - 
-               Math.cos(Math.PI / 180.0 * p.gamma) 
+    p.cy = p.c * (Math.cos(Math.PI / 180.0 * p.alpha) -
+               Math.cos(Math.PI / 180.0 * p.gamma)
              * Math.cos(Math.PI / 180.0 * p.beta))
              / Math.sin(Math.PI / 180.0 * p.gamma);
     p.cz = Math.sqrt(p.c * p.c * Math.sin(Math.PI / 180.0 * p.beta)
@@ -521,7 +650,7 @@ GLmol.prototype.drawUnitcell = function(group) {
 
    var vertices = [[0, 0, 0], [p.ax, p.ay, p.az], [p.bx, p.by, p.bz], [p.ax + p.bx, p.ay + p.by, p.az + p.bz],
           [p.cx, p.cy, p.cz], [p.cx + p.ax, p.cy + p.ay,  p.cz + p.az], [p.cx + p.bx, p.cy + p.by, p.cz + p.bz], [p.cx + p.ax + p.bx, p.cy + p.ay + p.by, p.cz + p.az + p.bz]];
-   var edges = [0, 1, 0, 2, 1, 3, 2, 3, 4, 5, 4, 6, 5, 7, 6, 7, 0, 4, 1, 5, 2, 6, 3, 7];    
+   var edges = [0, 1, 0, 2, 1, 3, 2, 3, 4, 5, 4, 6, 5, 7, 6, 7, 0, 4, 1, 5, 2, 6, 3, 7];
 
    var geo = new THREE.Geometry();
    for (i = 0; i < edges.length; i++) {
@@ -588,7 +717,7 @@ GLmol.prototype.drawBondsAsLineSub = function(geo, atom1, atom2, order) {
 };
 
 GLmol.prototype.drawBondsAsLine = function(group, atomlist, lineWidth) {
-   var geo = new THREE.Geometry();   
+   var geo = new THREE.Geometry();
    var nAtoms = atomlist.length;
    var _i, _j;
 
@@ -646,7 +775,7 @@ GLmol.prototype.drawAsCross = function(group, atomlist, delta) {
    var geo = new THREE.Geometry();
    var points = [[delta, 0, 0], [-delta, 0, 0], [0, delta, 0], [0, -delta, 0], [0, 0, delta], [0, 0, -delta]];
    var i, j;
- 
+
    for (i = 0, lim = atomlist.length; i < lim; i++) {
       var atom = this.atoms[atomlist[i]]; if (atom == undefined) continue;
 
@@ -675,7 +804,7 @@ GLmol.prototype.drawSmoothTube = function(group, _points, colors, radii) {
    for (i = 0, lim = points.length; i < lim; i++) {
       var r, idx = (i - 1) / axisDiv;
       if (i == 0) r = radii[0];
-      else { 
+      else {
          if (idx % 1 == 0) r = radii[idx];
          else {
             var floored = Math.floor(idx);
@@ -703,7 +832,7 @@ GLmol.prototype.drawSmoothTube = function(group, _points, colors, radii) {
          var c = Math.cos(angle), s = Math.sin(angle);
          geo.vertices.push(new TV3(
          points[i].x + c * axis1.x + s * axis2.x,
-         points[i].y + c * axis1.y + s * axis2.y, 
+         points[i].y + c * axis1.y + s * axis2.y,
          points[i].z + c * axis1.z + s * axis2.z));
       }
    }
@@ -951,16 +1080,16 @@ GLmol.prototype.drawStrand = function(group, atomlist, num, div, fill, coilWidth
             var O = new TV3(atom.x, atom.y, atom.z);
             O.subSelf(currentCA);
             O.normalize(); // can be omitted for performance
-            O.multiplyScalar((ss == 'c') ? coilWidth : helixSheetWidth); 
+            O.multiplyScalar((ss == 'c') ? coilWidth : helixSheetWidth);
             if (prevCO != undefined && O.dot(prevCO) < 0) O.negate();
             prevCO = O;
             for (j = 0; j < num; j++) {
                var delta = -1 + 2 / (num - 1) * j;
-               var v = new TV3(currentCA.x + prevCO.x * delta, 
+               var v = new TV3(currentCA.x + prevCO.x * delta,
                                currentCA.y + prevCO.y * delta, currentCA.z + prevCO.z * delta);
                if (!doNotSmoothen && ss == 's') v.smoothen = true;
                points[j].push(v);
-            }                         
+            }
          }
       }
    }
@@ -1031,14 +1160,14 @@ GLmol.prototype.drawNucleicAcidLadder = function(group, atomlist) {
 GLmol.prototype.drawNucleicAcidStick = function(group, atomlist) {
    var currentChain, currentResi, start = null, end = null;
    var i;
-   
+
    for (i in atomlist) {
       var atom = this.atoms[atomlist[i]];
       if (atom == undefined || atom.hetflag) continue;
 
       if (atom.resi != currentResi || atom.chain != currentChain) {
          if (start != null && end != null)
-            this.drawCylinder(group, new TV3(start.x, start.y, start.z), 
+            this.drawCylinder(group, new TV3(start.x, start.y, start.z),
                               new TV3(end.x, end.y, end.z), 0.3, start.color, true);
          start = null; end = null;
       }
@@ -1051,7 +1180,7 @@ GLmol.prototype.drawNucleicAcidStick = function(group, atomlist) {
       currentResi = atom.resi; currentChain = atom.chain;
    }
    if (start != null && end != null)
-      this.drawCylinder(group, new TV3(start.x, start.y, start.z), 
+      this.drawCylinder(group, new TV3(start.x, start.y, start.z),
                         new TV3(end.x, end.y, end.z), 0.3, start.color, true);
 };
 
@@ -1105,7 +1234,7 @@ GLmol.prototype.drawStrandNucleicAcid = function(group, atomlist, num, div, fill
    var points = []; for (k = 0; k < num; k++) points[k] = [];
    var colors = [];
    var currentChain, currentResi, currentO3;
-   var prevOO = null; 
+   var prevOO = null;
 
 
    for (i in atomlist) {
@@ -1114,11 +1243,11 @@ GLmol.prototype.drawStrandNucleicAcid = function(group, atomlist, num, div, fill
 
       if ((atom.atom == 'O3\'' || atom.atom == 'OP2') && !atom.hetflag) {
          if (atom.atom == 'O3\'') { // to connect 3' end. FIXME: better way to do?
-            if (currentChain != atom.chain || currentResi + 1 != atom.resi) {               
+            if (currentChain != atom.chain || currentResi + 1 != atom.resi) {
                if (currentO3) {
                   for (j = 0; j < num; j++) {
                      var delta = -1 + 2 / (num - 1) * j;
-                     points[j].push(new TV3(currentO3.x + prevOO.x * delta, 
+                     points[j].push(new TV3(currentO3.x + prevOO.x * delta,
                       currentO3.y + prevOO.y * delta, currentO3.z + prevOO.z * delta));
                   }
                }
@@ -1144,7 +1273,7 @@ GLmol.prototype.drawStrandNucleicAcid = function(group, atomlist, num, div, fill
             prevOO = O;
             for (j = 0; j < num; j++) {
                var delta = -1 + 2 / (num - 1) * j;
-               points[j].push(new TV3(currentO3.x + prevOO.x * delta, 
+               points[j].push(new TV3(currentO3.x + prevOO.x * delta,
                  currentO3.y + prevOO.y * delta, currentO3.z + prevOO.z * delta));
             }
             currentO3 = null;
@@ -1154,11 +1283,11 @@ GLmol.prototype.drawStrandNucleicAcid = function(group, atomlist, num, div, fill
    if (currentO3) {
       for (j = 0; j < num; j++) {
          var delta = -1 + 2 / (num - 1) * j;
-         points[j].push(new TV3(currentO3.x + prevOO.x * delta, 
+         points[j].push(new TV3(currentO3.x + prevOO.x * delta,
            currentO3.y + prevOO.y * delta, currentO3.z + prevOO.z * delta));
       }
    }
-   if (fill) this.drawStrip(group, points[0], points[1], colors, div, thickness); 
+   if (fill) this.drawStrip(group, points[0], points[1], colors, div, thickness);
    for (j = 0; !thickness && j < num; j++)
       this.drawSmoothCurve(group, points[j], 1 ,colors, div);
 };
@@ -1267,7 +1396,7 @@ GLmol.prototype.getAtomsWithin = function(atomlist, extent) {
       if (atom.x < extent[0][0] || atom.x > extent[1][0]) continue;
       if (atom.y < extent[0][1] || atom.y > extent[1][1]) continue;
       if (atom.z < extent[0][2] || atom.z > extent[1][2]) continue;
-      ret.push(atom.serial);      
+      ret.push(atom.serial);
    }
    return ret;
 };
@@ -1436,7 +1565,7 @@ GLmol.prototype.colorByPolarity = function(atomlist, polar, nonpolar) {
    var i;
    for (i in polarResidues) colorMap[polarResidues[i]] = polar;
    for (i in nonPolarResidues) colorMap[nonPolarResidues[i]] = nonpolar;
-   this.colorByResidue(atomlist, colorMap);   
+   this.colorByResidue(atomlist, colorMap);
 };
 
 // TODO: Add near(atomlist, neighbor, distanceCutoff)
@@ -1469,7 +1598,7 @@ GLmol.prototype.colorChainbow = function(atomlist, colorSidechains) {
 GLmol.prototype.drawSymmetryMates2 = function(group, asu, matrices) {
    if (matrices == undefined) return;
    asu.matrixAutoUpdate = false;
-   var i, j; 
+   var i, j;
    var cnt = 1;
    this.protein.appliedMatrix = new THREE.Matrix4();
    for (i = 0; i < matrices.length; i++) {
@@ -1519,7 +1648,7 @@ GLmol.prototype.defineRepresentation = function() {
    this.colorByAtom(all, {});
    this.colorByChain(all);
 
-   this.drawAtomsAsSphere(this.modelGroup, hetatm, this.sphereRadius); 
+   this.drawAtomsAsSphere(this.modelGroup, hetatm, this.sphereRadius);
    this.drawMainchainCurve(this.modelGroup, all, this.curveWidth, 'P');
    this.drawCartoon(this.modelGroup, all, this.curveWidth);
 };
@@ -1607,9 +1736,9 @@ GLmol.prototype.loadMoleculeStr = function(repressZoom, source) {
    this.atoms = [];
 
    this.parsePDB2(source);
-   if (!this.parseSDF(source)) this.parseXYZ(source);
+   if (!this.parseSDF(source) && !this.parseSDF3000(source) && !this.parseMOL2(source)) this.parseXYZ(source);
    console.log("parsed in " + (+new Date() - time) + "ms");
-   
+
    var title = $('#' + this.id + '_pdbTitle');
    var titleStr = '';
    if (this.protein.pdbID != '') titleStr += '<a href="http://www.rcsb.org/pdb/explore/explore.do?structureId=' + this.protein.pdbID + '">' + this.protein.pdbID + '</a>';
@@ -1644,9 +1773,9 @@ GLmol.prototype.setSlabAndFog = function() {
 };
 
 GLmol.prototype.enableMouse = function() {
-   var me = this, glDOM = $(this.renderer.domElement); 
+   var me = this, glDOM = $(this.renderer.domElement);
 
-   // TODO: Better touch panel support. 
+   // TODO: Better touch panel support.
    // Contribution is needed as I don't own any iOS or Android device with WebGL support.
    glDOM.bind('mousedown touchstart', function(ev) {
       ev.preventDefault();
@@ -1706,7 +1835,7 @@ GLmol.prototype.enableMouse = function() {
           me.slabNear = me.cslabNear + dx * 100;
           me.slabFar = me.cslabFar + dy * 100;
       } else if (mode == 2 || me.mouseButton == 3 || ev.shiftKey) { // Zoom
-         var scaleFactor = (me.rotationGroup.position.z - me.CAMERA_Z) * 0.85; 
+         var scaleFactor = (me.rotationGroup.position.z - me.CAMERA_Z) * 0.85;
          if (scaleFactor < 80) scaleFactor = 80;
          me.rotationGroup.position.z = me.cz - dy * scaleFactor;
       } else if (mode == 1 || me.mouseButton == 2 || ev.ctrlKey) { // Translate
@@ -1714,18 +1843,18 @@ GLmol.prototype.enableMouse = function() {
          if (scaleFactor < 20) scaleFactor = 20;
          var translationByScreen = new TV3(- dx * scaleFactor, - dy * scaleFactor, 0);
          var q = me.rotationGroup.quaternion;
-         var qinv = new THREE.Quaternion(q.x, q.y, q.z, q.w).inverse().normalize(); 
+         var qinv = new THREE.Quaternion(q.x, q.y, q.z, q.w).inverse().normalize();
          var translation = qinv.multiplyVector3(translationByScreen);
          me.modelGroup.position.x = me.currentModelPos.x + translation.x;
          me.modelGroup.position.y = me.currentModelPos.y + translation.y;
          me.modelGroup.position.z = me.currentModelPos.z + translation.z;
       } else if ((mode == 0 || me.mouseButton == 1) && r != 0) { // Rotate
          var rs = Math.sin(r * Math.PI) / r;
-         me.dq.x = Math.cos(r * Math.PI); 
+         me.dq.x = Math.cos(r * Math.PI);
          me.dq.y = 0;
-         me.dq.z =  rs * dx; 
+         me.dq.z =  rs * dx;
          me.dq.w =  rs * dy;
-         me.rotationGroup.quaternion = new THREE.Quaternion(1, 0, 0, 0); 
+         me.rotationGroup.quaternion = new THREE.Quaternion(1, 0, 0, 0);
          me.rotationGroup.quaternion.multiplySelf(me.dq);
          me.rotationGroup.quaternion.multiplySelf(me.cq);
       }
