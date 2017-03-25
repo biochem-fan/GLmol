@@ -49,7 +49,7 @@ GLmol.prototype.create = function(id, suppressAutoload) {
                          "F": 0x00CC00, "CL": 0x00CC00, "BR": 0x882200, "I": 0x6600AA,
                          "FE": 0xCC6600, "CA": 0x8888AA};
 // Reference: A. Bondi, J. Phys. Chem., 1964, 68, 441.
-   this.vdwRadii = {"H": 1.2, "Li": 1.82, "Na": 2.27, "K": 2.75, "C": 1.7, "N": 1.55, "O": 1.52,
+   this.vdwRadii = {"H": 1.2, "LI": 1.82, "NA": 2.27, "K": 2.75, "C": 1.7, "N": 1.55, "O": 1.52,
                    "F": 1.47, "P": 1.80, "S": 1.80, "CL": 1.75, "BR": 1.85, "SE": 1.90,
                    "ZN": 1.39, "CU": 1.4, "NI": 1.63};
 
@@ -160,7 +160,7 @@ GLmol.prototype.parseSDF = function(str) {
       atom.y = parseFloat(line.substr(10, 10));
       atom.z = parseFloat(line.substr(20, 10));
       atom.hetflag = true;
-      atom.atom = atom.elem = line.substr(31, 3).replace(/ /g, "");
+      atom.atom = atom.elem = line.substr(31, 3).replace(/ /g, "").toUpperCase();
       atom.bonds = [];
       atom.bondOrder = [];
       atoms[i] = atom;
@@ -218,7 +218,7 @@ GLmol.prototype.parseSDF3000 = function(str) {
             atom.y = parseFloat(line_data[5], 10);
             atom.z = parseFloat(line_data[6], 10);
             atom.hetflag = true;
-            atom.atom = atom.elem = line_data[3];
+            atom.atom = atom.elem = line_data[3].toUpperCase();
             atom.bonds = [];
             atom.bondOrder = [];
             atoms[atom.serial] = atom;
@@ -266,7 +266,7 @@ GLmol.prototype.parseMOL2 = function(str) {
 		}
 
         var line_data = lines[i].split(/(?:\s)+/g);
-        line_data = line_data.slice(1, line_data.length-1);
+        line_data = line_data.slice(1, line_data.length);
 
         if (atom_block){
             var atom = {};
@@ -275,7 +275,7 @@ GLmol.prototype.parseMOL2 = function(str) {
             atom.y = parseFloat(line_data[3], 10);
             atom.z = parseFloat(line_data[4], 10);
             atom.hetflag = true;
-            atom.atom = atom.elem = line_data[5].split(/(?:\.)/g)[0];
+            atom.atom = atom.elem = line_data[5].split(/(?:\.)/g)[0].toUpperCase();
             atom.bonds = [];
             atom.bondOrder = [];
             atoms[atom.serial] = atom;
@@ -327,7 +327,7 @@ GLmol.prototype.parseXYZ = function(str) {
       console.log(tokens);
       var atom = {};
       atom.serial = i;
-      atom.atom = atom.elem = tokens[0];
+      atom.atom = atom.elem = tokens[0].toUpperCase();
       atom.x = parseFloat(tokens[1]);
       atom.y = parseFloat(tokens[2]);
       atom.z = parseFloat(tokens[3]);
@@ -378,7 +378,7 @@ GLmol.prototype.parsePDB2 = function(str) {
          }
          if (line[0] == 'H') hetflag = true;
          else hetflag = false;
-         atoms[serial] = {'resn': resn, 'x': x, 'y': y, 'z': z, 'elem': elem,
+         atoms[serial] = {'resn': resn, 'x': x, 'y': y, 'z': z, 'elem': elem.toUpperCase(),
   'hetflag': hetflag, 'chain': chain, 'resi': resi, 'serial': serial, 'atom': atom,
   'bonds': [], 'ss': 'c', 'color': 0xFFFFFF, 'bonds': [], 'bondOrder': [], 'b': b /*', altLoc': altLoc*/};
       } else if (recordName == 'SHEET ') {
