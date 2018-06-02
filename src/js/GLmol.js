@@ -59,7 +59,8 @@ GLmol.prototype.create = function(id, suppressAutoload) {
    this.container = $('#' + this.id);
    this.WIDTH = this.container.width() * this.aaScale, this.HEIGHT = this.container.height() * this.aaScale;
    this.ASPECT = this.WIDTH / this.HEIGHT;
-   this.NEAR = 1, FAR = 800;
+   this.NEAR = 1;
+   this.FAR = 800;
    this.CAMERA_Z = -150;
    this.renderer = new THREE.WebGLRenderer({antialias: true});
    this.renderer.sortObjects = false; // hopefully improve performance
