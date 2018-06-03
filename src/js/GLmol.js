@@ -62,6 +62,7 @@ GLmol.prototype.create = function(id, suppressAutoload) {
    this.NEAR = 1;
    this.FAR = 800;
    this.CAMERA_Z = -150;
+   this.molecule_name = "";
    this.renderer = new THREE.WebGLRenderer({antialias: true});
    this.renderer.sortObjects = false; // hopefully improve performance
    // 'antialias: true' now works in Firefox too!
@@ -146,6 +147,7 @@ GLmol.prototype.parseSDF = function(str) {
    var i;
 
    var lines = str.split("\n");
+   this.molecule_name = lines[0]
    if (lines.length < 4) return;
    var atomCount = parseInt(lines[3].substr(0, 3));
    if (isNaN(atomCount) || atomCount <= 0) return;
