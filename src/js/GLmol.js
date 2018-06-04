@@ -148,13 +148,6 @@ GLmol.prototype.parseSDF = function(str) {
     this.molecule_name = lines[0]
     if (lines.length < 3) return;
     var offset = 2;
-    for (i = 0; i < lines.length; i++) {
-        if (lines[i].includes("3D")) {
-            console.log(lines[i])
-            offset = i+1;
-            break;
-        }
-    }
     var atomCount = parseInt(lines[offset].substr(0, 3));
     if (isNaN(atomCount) || atomCount <= 0) return;
     var bondCount = parseInt(lines[offset].substr(3, 3));
