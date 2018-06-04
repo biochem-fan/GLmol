@@ -149,7 +149,7 @@ GLmol.prototype.parseSDF = function(str) {
     if (lines.length < 3) return;
     var offset = 2;
     for (i = 0; i < lines.length; i++) {
-        if (lines[i].includes("RDKit")) {
+        if (lines[i].includes("3D")) {
             console.log(lines[i])
             offset = i+1;
             break;
