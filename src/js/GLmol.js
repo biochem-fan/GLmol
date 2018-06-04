@@ -59,7 +59,8 @@ GLmol.prototype.create = function(id, suppressAutoload) {
    this.container = $('#' + this.id);
    this.WIDTH = this.container.width() * this.aaScale, this.HEIGHT = this.container.height() * this.aaScale;
    this.ASPECT = this.WIDTH / this.HEIGHT;
-   this.NEAR = 1, FAR = 800;
+   this.NEAR = 1
+   this.FAR = 800;
    this.CAMERA_Z = -150;
    this.renderer = new THREE.WebGLRenderer({antialias: true});
    this.renderer.sortObjects = false; // hopefully improve performance
@@ -145,15 +146,16 @@ GLmol.prototype.parseSDF = function(str) {
    var i;
 
    var lines = str.split("\n");
+   this.molecule_name = lines[0]
+   var offset = 3;
    if (lines.length < 4) return;
-   var atomCount = parseInt(lines[3].substr(0, 3));
+   var atomCount = parseInt(lines[offset].substr(0, 3));
    if (isNaN(atomCount) || atomCount <= 0) return;
-   var bondCount = parseInt(lines[3].substr(3, 3));
-   var offset = 4;
+   var bondCount = parseInt(lines[offset].substr(3, 3));
+   
    if (lines.length < 4 + atomCount + bondCount) return;
    for (i = 1; i <= atomCount; i++) {
-      var line = lines[offset];
-      offset++;
+      var line = lines[offset + i];
       var atom = {};
       atom.serial = i;
       atom.x = parseFloat(line.substr(0, 10));
@@ -166,8 +168,7 @@ GLmol.prototype.parseSDF = function(str) {
       atoms[i] = atom;
    }
    for (i = 1; i <= bondCount; i++) {
-      var line = lines[offset];
-      offset++;
+      var line = lines[offset + atomCount + i];
       var from = parseInt(line.substr(0, 3));
       var to = parseInt(line.substr(3, 3));
       var order = parseInt(line.substr(6, 3));
