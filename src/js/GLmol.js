@@ -45,13 +45,56 @@ function GLmol(id, suppressAutoload) {
 
 GLmol.prototype.create = function(id, suppressAutoload) {
    this.Nucleotides = ['  G', '  A', '  T', '  C', '  U', ' DG', ' DA', ' DT', ' DC', ' DU'];
-   this.ElementColors = {"H": 0xCCCCCC, "C": 0xAAAAAA, "O": 0xCC0000, "N": 0x0000CC, "S": 0xCCCC00, "P": 0x6622CC,
-                         "F": 0x00CC00, "CL": 0x00CC00, "BR": 0x882200, "I": 0x6600AA,
-                         "FE": 0xCC6600, "CA": 0x8888AA};
+   this.ElementColors = {
+                         "CL": 0x00CC00, "BR": 0x882200,
+                         "FE": 0xCC6600, "CA": 0x8888AA,
+     "X":0xff0000, "H":0xffffff, "He":0xd9ffff, "Li":0xcc80ff,
+     "Be":0xc2ff00, "B":0xffb5b5, "C":0x909090, "N":0x2f50f8,
+     "O":0xff0d0d, "F":0x90df50, "Ne":0xb3e2f5, "Na":0xab5cf1,
+     "Mg":0x89ff00, "Al":0xbea6a6, "Si":0xefc79f, "P":0xff8000,
+     "S":0xffff2f, "Cl":0x1fef1f, "Ar":0x80d1e2, "K":0x8f40d3,
+     "Ca":0x3cff00, "Sc":0xe6e6e6, "Ti":0xbec2c6, "V":0xa6a6ab,
+     "Cr":0x8999c6, "Mn":0x9c79c6, "Fe":0xdf6633, "Co":0xef909f,
+     "Ni":0x50d050, "Cu":0xc78033, "Zn":0x7c80af, "Ga":0xc28f8f,
+     "Ge":0x668f8f, "As":0xbc80e2, "Se":0xffa000, "Br":0xa62929,
+     "Kr":0x5cb8d1, "Rb":0x6f2daf, "Sr":0x00ff00, "Y":0x93ffff,
+     "Zr":0x93dfdf, "Nb":0x73c2c8, "Mo":0x53b5b5, "Tc":0x3a9e9e,
+     "Ru":0x238f8f, "Rh":0x097c8b, "Pd":0x006985, "Ag":0xc0c0c0,
+     "Cd":0xffd98f, "In":0xa67573, "Sn":0x668080, "Sb":0x9e62b5,
+     "Te":0xd37900, "I":0x930093, "Xe":0x429eaf, "Cs":0x56168f,
+     "Ba":0x00c800, "La":0x6fd3ff, "Ce":0xffffc6, "Pr":0xd9ffc6,
+     "Nd":0xc6ffc6, "Pm":0xa2ffc6, "Sm":0x8fffc6, "Eu":0x60ffc6,
+     "Gd":0x45ffc6, "Tb":0x2fffc6, "Dy":0x1fffc6, "Ho":0x00ff9c,
+     "Er":0x00e675, "Tm":0x00d352, "Yb":0x00be38, "Lu":0x00ab23,
+     "Hf":0x4dc2ff, "Ta":0x4da6ff, "W":0x2093d5, "Re":0x257cab,
+     "Os":0x256695, "Ir":0x165386, "Pt":0xd0d0df, "Au":0xffd122,
+     "Hg":0xb8b8d0, "Tl":0xa6534d, "Pb":0x565860, "Bi":0x9e4fb5,
+     "Po":0xab5c00, "At":0x754f45, "Rn":0x428295, "Fr":0x420066,
+     "Ra":0x007c00, "Ac":0x6fabf9, "Th":0x00b9ff, "Pa":0x00a0ff,
+     "U":0x008fff, "Np":0x0080ff, "Pu":0x006bff, "Am":0x535cf1,
+     "Cm":0x785ce2, "Bk":0x894fe2, "Cf":0xa036d3, "Es":0xb31fd3,
+     "Fm":0xb31fb9, "Md":0xb30da6, "No":0xbc0d86, "Lr":0xc60066,
+     "Rf":0xcc0058, "Db":0xd1004f, "Sg":0xd90045, "Bh":0xdf0038,
+     "Hs":0xe6002d, "Mt":0xeb0025};
 // Reference: A. Bondi, J. Phys. Chem., 1964, 68, 441.
-   this.vdwRadii = {"H": 1.2, "LI": 1.82, "NA": 2.27, "K": 2.75, "C": 1.7, "N": 1.55, "O": 1.52,
-                   "F": 1.47, "P": 1.80, "S": 1.80, "CL": 1.75, "BR": 1.85, "SE": 1.90,
-                   "ZN": 1.39, "CU": 1.4, "NI": 1.63};
+// Add from ASE ase.data.vdw_radii
+   this.vdwRadii = {"LI": 1.82, "NA": 2.27,
+                   "CL": 1.75, "BR": 1.85, "SE": 1.90,
+                   "ZN": 1.39, "CU": 1.4, "NI": 1.63
+             "H":1.2, "He":1.4, "Li":1.82, "Be":1.53,
+             "B":1.92, "C":1.7, "N":1.55, "O":1.52,
+             "F":1.47, "Ne":1.54, "Na":2.27, "Mg":1.73,
+             "Al":1.84, "Si":2.1, "P":1.8, "S":1.8,
+             "Cl":1.75, "Ar":1.88, "K":2.75, "Ca":2.31,
+             "Ni":1.63, "Cu":1.4, "Zn":1.39, "Ga":1.87,
+             "Ge":2.11, "As":1.85, "Se":1.9, "Br":1.85,
+             "Kr":2.02, "Rb":3.03, "Sr":2.49, "Pd":1.63,
+             "Ag":1.72, "Cd":1.58, "In":1.93, "Sn":2.17,
+             "Sb":2.06, "Te":2.06, "I":1.98, "Xe":2.16,
+             "Cs":3.43, "Ba":2.49, "Pt":1.75, "Au":1.66,
+             "Hg":1.55, "Tl":1.96, "Pb":2.02, "Bi":2.07,
+             "Po":1.97, "At":2.02, "Rn":2.2, "Fr":3.48,
+             "Ra":2.83, "U":1.86};
 
    this.id = id;
    this.aaScale = 1; // or 2
@@ -152,7 +195,7 @@ GLmol.prototype.parseSDF = function(str) {
    var atomCount = parseInt(lines[offset].substr(0, 3));
    if (isNaN(atomCount) || atomCount <= 0) return;
    var bondCount = parseInt(lines[offset].substr(3, 3));
-   
+
    if (lines.length < 4 + atomCount + bondCount) return;
    for (i = 1; i <= atomCount; i++) {
       var line = lines[offset + i];
