@@ -152,7 +152,7 @@ GLmol.prototype.parseSDF = function(str) {
    var atomCount = parseInt(lines[offset].substr(0, 3));
    if (isNaN(atomCount) || atomCount <= 0) return;
    var bondCount = parseInt(lines[offset].substr(3, 3));
-   
+
    if (lines.length < 4 + atomCount + bondCount) return;
    for (i = 1; i <= atomCount; i++) {
       var line = lines[offset + i];
@@ -570,9 +570,9 @@ GLmol.prototype.isConnected = function(atom1, atom2) {
    return 1;
 };
 
-GLmol.prototype.drawBondAsStickSub = function(group, atom1, atom2, bondR, order) {
+GLmol.prototype.drawBondAsStickSub = function(group, atom1, atom2, bondR, order, sepFactor) {
    var delta, tmp;
-   if (order > 1) delta = this.calcBondDelta(atom1, atom2, bondR * 2.3);
+   if (order > 1) delta = this.calcBondDelta(atom1, atom2, bondR * sepFactor * (order-1));
    var p1 = new TV3(atom1.x, atom1.y, atom1.z);
    var p2 = new TV3(atom2.x, atom2.y, atom2.z);
    var mp = p1.clone().addSelf(p2).multiplyScalar(0.5);
@@ -592,7 +592,7 @@ GLmol.prototype.drawBondAsStickSub = function(group, atom1, atom2, bondR, order)
    }
 };
 
-GLmol.prototype.drawBondsAsStick = function(group, atomlist, bondR, atomR, ignoreNonbonded, multipleBonds, scale) {
+GLmol.prototype.drawBondsAsStick = function(group, atomlist, bondR, atomR, ignoreNonbonded, multipleBonds, scale, sepFactor=2.5) {
    var sphereGeometry = new THREE.SphereGeometry(1, this.sphereQuality, this.sphereQuality);
    var nAtoms = atomlist.length, mp;
    var forSpheres = [];
@@ -609,7 +609,7 @@ GLmol.prototype.drawBondsAsStick = function(group, atomlist, bondR, atomR, ignor
          var order = this.isConnected(atom1, atom2);
          if (order == 0) continue;
          atom1.connected = atom2.connected = true;
-         this.drawBondAsStickSub(group, atom1, atom2, bondR, (!!multipleBonds) ? order : 1);
+         this.drawBondAsStickSub(group, atom1, atom2, bondR, (!!multipleBonds) ? order : 1, sepFactor);
       }
       for (_j = 0; _j < atom1.bonds.length; _j++) {
          var j = atom1.bonds[_j];
@@ -618,11 +618,16 @@ GLmol.prototype.drawBondsAsStick = function(group, atomlist, bondR, atomR, ignor
          var atom2 = this.atoms[j];
          if (atom2 == undefined) continue;
          atom1.connected = atom2.connected = true;
-         this.drawBondAsStickSub(group, atom1, atom2, bondR, (!!multipleBonds) ? atom1.bondOrder[_j] : 1);
+         this.drawBondAsStickSub(group, atom1, atom2, bondR, (!!multipleBonds) ? atom1.bondOrder[_j] : 1, sepFactor);
       }
       if (atom1.connected) forSpheres.push(i);
    }
    this.drawAtomsAsSphere(group, forSpheres, atomR, !scale, scale);
+};
+
+GLmol.prototype.drawBallAndStick = function({group, atomlist, bondR=0.2, atomR=0.3, ignoreNonbonded=false, multipleBonds=true, scale=0.2}) {
+  // Template of drawBondsAsStick for ball and stick viewing
+  this.drawBondsAsStick(group, atomlist, bondR, atomR, ignoreNonbonded, multipleBonds, (!!scale) ? scale : undefined, 1.1)
 };
 
 GLmol.prototype.defineCell = function() {
